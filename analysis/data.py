@@ -121,7 +121,7 @@ def plot_samples_events(samples_df, events_df, event_length:int=None):
 if __name__ == '__main__':
     print("data.py")
 
-    FILE_PATH = "./data/DoubleBlinkLR_Alex"
+    FILE_PATH = "../data/DoubleBlinkLR_Alex"
 
     samples_df = load_sample_data(FILE_PATH)
     samples_df = downsample(samples_df, n=100)
