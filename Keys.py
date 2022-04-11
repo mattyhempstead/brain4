@@ -30,7 +30,7 @@ class Keys:
         self.root = None
 
     def init_trees(self):
-        alpha_ls = ['E','T','A','I','O','N','S','H','R','B','C','D','F','G','Delete','J','K','L','M','P','Q','U','V','W','X','Y','Z','Space','123','Upper','Clear']
+        alpha_ls = ['E','T','A','I','O','N','S','H','R','B','C','D','F','G','Delete','J','K','L','M','P','Q','U','V','W','X','Y','Z','Space','123','U/L','Clear']
         punc_ls = ['.',0,',',1,2,':',';',3,4,5,'/','?','!','\'','\"',6,7,8,9,'@','&','-','_','(',')','[',']','Space','abc','Delete','Clear']
 
         self.root = Node(alpha_ls[0], punc_ls[0])
@@ -38,7 +38,7 @@ class Keys:
         tmp = [self.root]
 
         for i in range(1,len(alpha_ls)):
-            new = Node(alpha_ls[i], punc_ls[i])
+            new = Node(alpha_ls[i], str(punc_ls[i]))
             if i < 15:
                 tmp.append(new)
             else:

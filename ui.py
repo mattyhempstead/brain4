@@ -1,6 +1,13 @@
 # Import and initialize the pygame library
 import pygame
 import Keys
+from pygame.locals import (
+    K_LEFT,
+    K_RIGHT,
+    K_RETURN,
+    KEYDOWN,
+    QUIT,
+)
 
 pygame.init()
 pygame.display.set_caption("Virtual Keyboard")
@@ -15,12 +22,6 @@ DARK_GREY = (20, 20, 20)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 LIGHT_GREY = (211, 211, 211)
-
-from pygame.locals import (
-    K_LEFT,
-    K_RIGHT,
-    K_RETURN
-)
 
 KEY_FONT = pygame.font.Font(None, 45)
 OPTION_FONT = pygame.font.Font(None, 25)
@@ -38,11 +39,7 @@ KEYS.root.width = LAYER_WIDTH[0][0]
 INPUT_WIDTH = 330
 INPUT_HEIGHT = 100
 
-# def main():
-#     keys = []
-#     user_input = ""
-
-user_input = "Hello world"
+user_input = ""
 running = True
 alpha = True
 upper = False
@@ -50,44 +47,51 @@ cursor = KEYS.root
 
 while running:
 
-    # logic part
+    # event handler
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type == QUIT:
             running = False
         # move the cursor
-        if event.type == K_LEFT:
-            if cursor.is_leaf():
-                cursor = KEYS.root
-            else:
-                cursor = cursor.left
+        elif event.type == KEYDOWN:
+            if event.key == K_LEFT:
+                if cursor.is_leaf():
+                    cursor = KEYS.root
+                else:
+                    cursor = cursor.left
 
-        if event.type == K_RIGHT:
-            if cursor.is_leaf():
-                cursor = KEYS.root
-            else:
-                cursor = cursor.right
+            if event.key == K_RIGHT:
+                if cursor.is_leaf():
+                    cursor = KEYS.root
+                else:
+                    cursor = cursor.right
 
-        if event.type == K_RETURN:
-            key = ""
-            if alpha:
-                key = cursor.alpha_key
-            else:
-                key = cursor.punc_key
+            if event.key == K_RETURN:
+                key = ""
+                if alpha:
+                    key = cursor.alpha_key
+                else:
+                    key = cursor.punc_key
 
-            if len(key) == 1:
-                user_input += key
-            elif key == "Space":
-                user_input += " "
-            elif key == "Delete":
-                user_input = user_input[:-1]
-            elif key == "Clear":
-                user_input = ""
-            elif key == "Upper":
-                upper = not upper
-            elif key == "123":
-                alpha = False
-            elif key == "abc":
-                alpha = True
+                if len(key) == 1:
+                    if not upper and key.isalpha():
+                        user_input += key.lower()
+                    else:
+                        user_input += key
+                elif key == "Space":
+                    user_input += " "
+                elif key == "Delete":
+                    user_input = user_input[:-1]
+                elif key == "Clear":
+                    user_input = ""
+                elif key == "U/L":
+                    upper = not upper
+                elif key == "123":
+                    cursor = KEYS.root
+                    alpha = False
+                elif key == "abc":
+                    upper = False
+                    cursor = KEYS.root
+                    alpha = True
 
 
     # fill the background with white
@@ -123,47 +127,55 @@ while running:
 
             pygame.draw.line(SCREEN, BLACK, start_pos, end_pos)
 
-        # fill the current cursor with light grey
-
-        # cursor_rect = pygame.Rect((cursor.width+1, cursor.height+1), (RECT_X-2, RECT_Y-2))
-        # pygame.draw.rect(SCREEN, LIGHT_GREY, cursor_rect)
-        # print("rect")
-
-        cursor_surf = pygame.Surface((RECT_X-2, RECT_Y-2))
-        cursor_surf.fill(LIGHT_GREY)
-        SCREEN.blit(cursor_surf, (cursor.width+1, cursor.height+1))
+        # create surface for keys
+        rect_surf = pygame.Surface((RECT_X-2, RECT_Y-2))
+        if cursor.width == tmp.width and cursor.height == tmp.height:
+            rect_surf.fill(LIGHT_GREY)
+        else:
+            rect_surf.fill(WHITE)
 
         # option or key
         if alpha:
+            key = tmp.alpha_key
             if len(tmp.alpha_key) > 1:
-                surface = OPTION_FONT.render(tmp.alpha_key, True, DARK_GREY)
-                if len(tmp.alpha_key) == 5:
-                    SCREEN.blit(surface, (tmp.width + 3, tmp.height + 10))
-                elif len(tmp.alpha_key) == 3:
-                    SCREEN.blit(surface, (tmp.width + 10, tmp.height + 10))
+                if key == "U/L":
+                    if upper:
+                        key = "Lower"
+                    else:
+                        key = "Upper"
+                surface = OPTION_FONT.render(key, True, DARK_GREY)
+
+                if len(key) == 5:
+                    rect_surf.blit(surface, (1, 8))
+                elif len(key) == 3:
+                    rect_surf.blit(surface, (8, 8))
                 else:
-                    SCREEN.blit(surface, (tmp.width + 1, tmp.height + 10))
+                    rect_surf.blit(surface, (0, 8))
+
+                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
             else:
-                if cursor.width == tmp.width and cursor.height == tmp.height:
-                    surface = KEY_FONT.render(tmp.alpha_key, True, DARK_GREY)
-                    cursor_surf.blit(surface, (18, 6))
-                    print("alpha1")
-                else:
-                    surface = KEY_FONT.render(tmp.alpha_key, True, DARK_GREY)
-                    SCREEN.blit(surface, (tmp.width + 18, tmp.height + 6))
-                    print("alpha2")
+                if not upper:
+                    key = key.lower()
+
+                surface = KEY_FONT.render(key, True, DARK_GREY)
+                rect_surf.blit(surface, (16, 4))
+                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
         else:
             if len(str(tmp.punc_key)) > 1:
                 surface = OPTION_FONT.render(tmp.punc_key, True, DARK_GREY)
-                if len(tmp.alpha_key) == 5:
-                    SCREEN.blit(surface, (tmp.width + 3, tmp.height + 10))
-                elif len(tmp.alpha_key) == 3:
-                    SCREEN.blit(surface, (tmp.width + 10, tmp.height + 10))
+
+                if len(tmp.punc_key) == 5:
+                    rect_surf.blit(surface, (1, 8))
+                elif len(tmp.punc_key) == 3:
+                    rect_surf.blit(surface, (8, 8))
                 else:
-                    SCREEN.blit(surface, (tmp.width + 1, tmp.height + 10))
+                    rect_surf.blit(surface, (0, 8))
+
+                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
             else:
                 surface = KEY_FONT.render(str(tmp.punc_key), True, DARK_GREY)
-                SCREEN.blit(surface, (tmp.width + 18, tmp.height + 6))
+                rect_surf.blit(surface, (15, 4))
+                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
 
         j += 1
         if j >= len(LAYER_WIDTH[i]):
@@ -172,12 +184,7 @@ while running:
 
     # Flip the display
     pygame.display.flip()
-    clock = pygame.time.Clock()
-    clock.tick(1)
 
 
 # Done! Time to quit.
 pygame.quit()
-
-# if __name__ == "__main__":
-#     main()
