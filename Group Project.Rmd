@@ -1,0 +1,202 @@
+---
+title: "Group Project"
+output: html_document
+---
+# Reading in Data and Plotting
+```{r}
+library(tidyverse)
+library(tuneR)
+library(ggplot2)
+dir <- "data"
+all_files <- list.files(dir)
+
+wave_files <- list()
+timeSeq = list()
+for (i in all_files) {
+  
+  wave_files[[i]] <- tuneR::readWave(file.path(dir, i))
+  timeSeq[[i]] <- seq_len(length(wave_files[[i]]))/wave_files[[i]]@samp.rate
+  plot(timeSeq[[i]], wave_files[[i]]@left, type = "l", ylab="Signal", xlab="Time(seconds)", main = file.path(dir, i ))
+}
+
+```
+# Testing on smallest file
+```{r}
+test_short = readWave("data/Ashwin1.wav")
+time_test_short <- seq_len(length(test_short))/test_short@samp.rate 
+```
+
+# Eye movement function, need to decide on threshold, window size etc
+
+```{r}
+eye_movement_ZC = function(Y, time, 
+                           windowSize = 0.5, 
+                           thresholdEvents = 20,
+                           downSampleRate = 50) {
+  
+  ## down sample
+  ind = seq_len(which(time == round(time[length(time)] - windowSize, 4)) + 1)
+  ind = seq(1, ind[length(ind)], by = downSampleRate)
+  
+  ## time vector for middle of each window
+  timeMiddle <- time[ind] + windowSize/2 
+  testStat = rep(NA, length(ind))
+  
+  ## calculate zero-crossings
+  for (i in 1:length(ind)) {
+    Y_subset <- Y[time >= time[ind[i]] & time < time[ind[i]] + windowSize]
+    testStat[i] <- sum(Y_subset[1:(length(Y_subset) - 1)] * Y_subset[2:(length(Y_subset))] <= 0)
+  }
+  
+  ## using threshold to determine eye movement intervals
+  predictedEvent <- which(testStat < thresholdEvents)
+  eventTimes <- timeMiddle[predictedEvent] # map back to the time of this 
+  gaps <- which(diff(eventTimes) > windowSize )
+  
+  ## estimate event_time_interval
+  event_time_interval <- min(eventTimes)
+  for (i in 1:length(gaps)) {
+    event_time_interval <- append(event_time_interval, 
+                                  c(eventTimes[gaps[i]],
+                                    eventTimes[gaps[i] + 1]))
+  }
+  event_time_interval <- append(event_time_interval, max(eventTimes))
+  event_time_interval <- matrix(event_time_interval, ncol = 2, byrow = TRUE)
+  
+  predictedEventTimes <- rep(FALSE, length(Y))
+  for (i in 1:nrow(event_time_interval)) {
+    predictedEventTimes[event_time_interval[i, 1] <= time & event_time_interval[i, 2] >= time] <- TRUE
+  }
+  
+  num_event <- length(gaps) + 1
+  return(list(num_event = num_event, 
+              predictedEventTimes = predictedEventTimes,
+              predictedInterval = event_time_interval))
+}
+
+## Testout the function
+eye_movement_ZC(Y = test_short @left, time = time_test_short)$predictedInterval
+```
+Seems to not be working correctly as its showing more events than are on Ashwin1_label.txt. 
+# Function to extract signals 
+```{r}
+extractSignal = function(limits, seq, xtime) {
+index = (xtime > limits[1]) & (xtime < limits[2])
+return(seq[index])
+}
+# wave_seq = list()
+# for(i in 1:length(wave_files)) {
+# print(i)
+# wave_file= wave_files[[i]]
+# Y = wave_file@left
+# xtime = seq_len(length(wave_file))/wave_file@samp.rate 
+# cut_result = eye_movement_ZC(Y, xtime)
+# wave_seq[[i]] = apply(cut_result$predictedInterval, 1, extractSignal, Y, xtime)
+# }
+```
+```{r}
+extractSignal = function(limits, seq, xtime) {
+index = (xtime > limits[1]) & (xtime < limits[2])
+return(seq[index])
+}
+wave_seq = list()
+
+Y = test_short@left
+
+cut_result = eye_movement_ZC(Y, time_test_short)
+wave_seq = apply(cut_result$predictedInterval, 1, extractSignal, Y, xtime)
+
+
+```
+
+# Functions for viewing zero crossings/max/standard deviations
+```{r}
+windowSize = 0.5
+downSampleRate = 100
+time_test_short[length(time_test_short)] - windowSize
+ind = seq_len(which(time_test_short == time_test_short[length(time_test_short)] - windowSize) + 1)
+ind = seq(1, length(ind), by = downSampleRate)
+length(ind)
+df <- data.frame(Y = test_short@left, 
+                 time = time_test_short,
+                 event_type = "none",
+                 event_time = NA,
+                 event_pos = NA)
+
+testStat = rep(NA, length(ind))
+
+for (i in 1:length(ind)) {
+  # Calculate the standard deviation of signals within the window
+  testStat[i] <- sd(df$Y[df$time >= df$time[ind[i]] & df$time < df$time[ind[i]] + windowSize])
+}
+plot(testStat, type="l")
+```
+
+
+```{r}
+testStat = testStat1 = testStat2 = rep(NA, length(ind))
+stat_event <- rep(NA, length(ind))
+
+for (i in 1:length(ind)) {
+  Y_subset <- df$Y[df$time >= df$time[ind[i]] & df$time < df$time[ind[i]] + windowSize]
+  
+  # Calculate the standard deviation of signals within the window
+  testStat[i] <- sd(Y_subset)
+  testStat1[i] = max(Y_subset)
+  testStat2[i] = sum(Y_subset[1:(length(Y_subset) - 1)] * Y_subset[2:(length(Y_subset))] <= 0)
+}
+
+matplot(cbind(testStat, testStat1, testStat2*10), type="l", lty=1, ylab="statistics")
+legend("topright", c("SD", "max", "zerocrossing"), lty=1, col=1:3)
+```
+
+If we can overlay the actual events (like Matty did on the jupyter notebook), then we could potentially determine a decent threshold from these plots. But then we would have to do this for all of the .wav files, so not sure if this is a great approach. 
+
+# Function for determining left or right 
+```{r}
+LR_detection = function(seq) {
+maxval = which.max(seq)
+minval = which.min(seq)
+movement = ifelse(maxval < minval,  "L", "R")
+return(movement)
+}
+```
+
+# Insert someone's working streaming classifier function from assignment (never got mine to work)
+```{r}
+# streaming_classifier = function(wave_file,
+#                                 window_size = wave_file@samp.rate,
+#                                 increment = window_size/3) {
+#   Y = wave_file@left
+#   xtime = seq_len(length(wave_file))/wave_file@samp.rate
+#   df= data.frame( Y=Y, time = xtime)
+#   predicted_labels = c()
+#   lower_interval = 1
+#   max_time = max(xtime)*window_size
+# 
+#   while(max_time > lower_interval + window_size)
+#   {
+#     upper_interval = lower_interval + window_size
+#     interval = Y[lower_interval:upper_interval]
+#     events = eye_movement_ZC(Y = interval, time = xtime[lower_interval:upper_interval])$predictedInterval
+#     if (length(events) != 0) {predicted = LR_detection(extractSignal(events, Y, xtime))}
+# 
+# 
+# 
+#       predicted_labels = c(predicted_labels, predicted)
+# 
+#     lower_interval = lower_interval + increment
+#   } ## end while
+# 
+# }## end function
+```
+
+
+
+
+```{r}
+test_short = readWave("data/Ashwin1.wav")
+time_test_short <- seq_len(length(test_short))/test_short@samp.rate 
+streaming_classifier(wave_file = test_short)$predicted_labels
+```
+
