@@ -1,22 +1,23 @@
-import serial
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import signal
 
-# Read unprocessed data from the spikerBox
-def read_arduino(ser, inputBuffersize):
-    data = ser.read(inputBuffersize)
+import serial 
+import numpy as np
+from scipy import signal
+import matplotlib.pyplot as plt
+
+
+# Read unprocessed data from spikerBox
+def read_arduino(ser, inputBufferSize):
+    data = ser.read(inputBufferSize)
     out = [(int(data[i])) for i in range(0,len(data))]
     return out
 
-# Convert spikerBox data to a list of amplitude measurements
+# Convert spikerBox data to list of amplitude measurements
 def process_data(dataIn):
     rawData = np.array(dataIn)
     processedData = []
     i = 1
     while i < len(rawData) - 1:
         if rawData[i] > 127:
-            # Found beginning of frame. Extract one sample from two bytes
             intOut = (np.bitwise_and(rawData[i], 127)) * 128
             i += 1
             intOut += rawData[i]
@@ -24,71 +25,91 @@ def process_data(dataIn):
         i += 1
     return processedData
 
-################################# Set SpikerBox parameters ###############################################
+# Set SpikerBox Parameters
+
 bRate = 230400
-portNum = '/dev/tty.usbserial-DJ00E2W2'  # WILL DIFFER BETWEEN MAC AND PC
-Fs = 10000  # Sampling Frequency in Hz
-inputBufferSize = 20000  # NOTE 20000 = 1 second buffer
-ser = serial.Serial(port=portNum, baudrate=bRate)  # Setup communication channel
-ser.timeout = inputBufferSize/20000.0
-ser.set_buffer_size(rx_size=inputBufferSize)
-#######################################################################################################
+portNum = '/dev/tty.usbserial-DJ00DV99' # Differs for MAC AND PC
+Fs = 10000 # Sampling freq in Hz
+inputBufferSize = 10000 # 20 000 = 1 second buffer
+bufferFillTime = inputBufferSize/20000.0 # Time to fill a buffer in seconds
+ser = serial.Serial(port=portNum, baudrate=bRate)
+ser.timeout = inputBufferSize/20000.0 
+# ser.set_buffer_size(rx_size=inputBufferSize) LINE NOT REQUIRED ON MAC
 
-# Time-limited data streaming - can adjust to make indefinite
-totalTime = 20  # Total Streaming time in seconds
-plotWindowTime = 10  # Total time plotted in window in seconds
-numLoops = 20000.0/inputBufferSize*totalTime  # Number of buffer loops in entire streaming period
-tAcquire = inputBufferSize/20000.0  # Period of time that data is acquired for to fill buffer (in seconds)
-plotWindowLoops = plotWindowTime/tAcquire  # Number of loops required to fill the entire plot window
+# Setup Calibration Phase
+calibrationTime = 10 # Seconds
+calibrationLoops = calibrationTime/bufferFillTime
 
-# Setup the plot window
+
+# Setup Plot
+plotFlag = True
 fig = plt.figure()
-ax1 = fig.add_subplot(1, 1, 1)
+ax1 = fig.add_subplot(1,1,1)
 plt.ion()
 fig.show()
 fig.canvas.draw()
-########################################################################################################
 
-# Initiate data collection loops and plot data for each filled buffer
-dataPlot = []
-for k in range(0, int(numLoops)):
-    data = read_arduino(ser, inputBufferSize)  # Read in the data from the current buffer
-    dataTemp = process_data(data)  # Store the data in the current buffer
-    if k <= plotWindowLoops:
-        # If the current loops are to be plotted in the window
-        dataPlot = np.append(dataTemp, dataPlot)
-        t = (min(k+1, plotWindowLoops))*inputBufferSize/20000.0*np.linspace(0, 1, dataPlot.size)
-    else:
-        # If data is just being recorded (not plotted), continue to add to the array
-        dataPlot = np.roll(dataPlot, len(dataTemp))  # Designate space to the start of the array for new data
-        dataPlot[0:len(dataTemp)] = dataTemp  # Fill new space with data
-    t = (min(k+1, plotWindowLoops))*inputBufferSize/20000.0*np.linspace(0, 1, dataPlot.size)
+loopCount = 0
+t = []
+dataActual = [] # Store streaming data - NOT NEEDED FOR FINAL IMPLEMENTATION AS ONLY NEED DATA FROM CURRENT BUFFER
+calibrationArray = [] # Store calibration data
 
-    # Filter Signal using 5th order ButterWorth Filter
-    N = 5  # Filter Order
-    cutOff = 4  # Cutoff Frequency in Hz
-    normalizedCutOff = cutOff/(Fs/2)
-    b, a = signal.butter(N, Wn=normalizedCutOff)
-    # Zero Phase double filter
-    filteredSignal = signal.filtfilt(b, a, dataPlot)
+# Start Stream
 
-    # Plot data
-    ax1.clear()
-    ax1.set_xlim(0, plotWindowTime)
-    plt.xlabel('time [s]')
-    ax1.plot(t, filteredSignal)
-    fig.canvas.draw()
-    plt.show()
+try:
+    while True:
+        data = read_arduino(ser, inputBufferSize)  # Read in data from current buffer
+        dataTemp = process_data(data) # Temporarily store data from current buffer
+        if len(dataTemp) > 0:
+            dataNorm = dataTemp
+            n = len(dataTemp)
+            dF = Fs/n  # Freq step
+            start = -Fs/2
+            end = Fs/2
+            f = np.transpose(np.arange(start, end, dF))
+            lowerFreqCutoff = 1 # Hz
+            HpFilter = ((abs(f) > lowerFreqCutoff))
+            spectrum = (np.fft.fftshift(np.fft.fft(dataNorm)))/n
+            spectrum = np.multiply(HpFilter, spectrum)
+            fftFiltered = np.abs(np.fft.ifft(np.fft.ifftshift(spectrum))*n)
+            order = 5 # Butterworth filter order
+            cutOffFreq = 10 # Hz
+            normalizedCutoff = cutOffFreq/(Fs/2)
+            b, a = signal.butter(order, Wn=normalizedCutoff)
+            dataFiltered = signal.filtfilt(b,a, fftFiltered) # Butterworth filter
+            if loopCount <= calibrationLoops:
+                # CALIBRATION PHASE
+                calibrationArray = np.append(dataFiltered, calibrationArray)
+                calibrationT = np.double((loopCount+1)*inputBufferSize/20000.0 * np.linspace(0, 1, len(calibrationArray)))
+                if plotFlag == True:
+                    ax1.clear()
+                    ax1.set_xlim(0, calibrationTime)
+                    plt.xlabel('time (s)')
+                    ax1.plot(calibrationT, calibrationArray)
+                    fig.canvas.draw()
+                    plt.draw()
+                    plt.pause(0.001)
+            else:
+                # STREAMING PHASE
+                if loopCount == (calibrationLoops+1):
+                    noise = np.mean(calibrationArray) # Calculate baseline for subtraction
+                filteredSignal = dataFiltered - noise # Subtract baseline
+                dataActual = np.append(filteredSignal, dataActual) # Save to array - MAY JUST NEED TO DIRECTLY OUTPUT FILTERED SIG IN FINAL VERSION
+                t = np.double((loopCount-calibrationLoops)*inputBufferSize/20000.0 * np.linspace(0,1,len(dataActual)))    # Start actual streaming at t = 0
+                if plotFlag == True:
+                    ax1.clear()
+                    ax1.set_xlim(0, calibrationTime)
+                    plt.xlabel('time (s)')
+                    ax1.plot(t, dataActual)
+                    fig.canvas.draw()
+                    plt.draw()
+                    plt.pause(0.001)
+            loopCount += 1
+except KeyboardInterrupt:
+    pass
 
-##################################################################################################################
-
-# SAVE DATA FROM STREAMING SESSION
-fileName = 'stream.txt'
-np.savetxt(fileName, np.c_[t, np.real(filteredSignal)])
-
-
-# Close serial port if necessary
 if ser.read():
     ser.flushInput()
     ser.flushOutput()
     ser.close()
+
