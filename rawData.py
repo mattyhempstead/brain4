@@ -2,7 +2,6 @@ import serial
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
-from scipy.io.wavfile import write
 
 
 # Read unprocessed data from spikerBox
@@ -63,7 +62,7 @@ except KeyboardInterrupt:
     pass
 
 
-# SAVE TO WAVE FILE
+# SAVE TO TXT FILE
 fileName = 'rawData.txt'
 np.savetxt(fileName, np.c_[t, dataActual])
 
