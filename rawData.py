@@ -34,11 +34,12 @@ ser.timeout = inputBufferSize/20000.0
 
 # Setup Plot
 plotFlag = True
-fig = plt.figure()
-ax1 = fig.add_subplot(1,1,1)
-plt.ion()
-fig.show()
-fig.canvas.draw()
+if plotFlag == True:
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    plt.ion()
+    fig.show()
+    fig.canvas.draw()
 
 loopCount = 0
 t = []
@@ -50,14 +51,15 @@ try:
         dataTemp = process_data(data) # Temporarily store data from current buffer
         dataActual = np.append(dataTemp, dataActual)
         t = np.double((loopCount +1)*inputBufferSize/20000.0 * np.linspace(0,1,len(dataActual)))
+        if plotFlag == True:
+            ax1.clear()
+            ax1.set_xlim(0, 5)
+            plt.xlabel('time (s)')
+            ax1.plot(t, dataActual)
+            fig.canvas.draw()
+            plt.draw()
+            plt.pause(0.001)
         loopCount += 1
-        ax1.clear()
-        ax1.set_xlim(0, 5)
-        plt.xlabel('time (s)')
-        ax1.plot(t, dataActual)
-        fig.canvas.draw()
-        plt.draw()
-        plt.pause(0.001)
 except KeyboardInterrupt:
     pass
 
