@@ -42,7 +42,6 @@ if plotFlag == True:
     fig.canvas.draw()
 
 loopCount = 0
-t = []
 dataActual = [] # Store streaming data - NOT NEEDED FOR FINAL IMPLEMENTATION AS ONLY NEED DATA FROM CURRENT BUFFER
 
 try:
