@@ -9,6 +9,28 @@ from pygame.locals import (
     QUIT,
 )
 
+# custom event
+LEFT = pygame.USEREVENT + 1
+RIGHT = pygame.USEREVENT + 2
+SELECT = pygame.USEREVENT + 3
+
+""" 
+----call the events----
+ 1. Convert event to Pygame's event type
+ 
+LEFT_EVENT = pygame.event.Event(LEFT)
+RIGHT_EVENT = pygame.event.Event(RIGHT)
+SELECT_EVENT = pygame.event.Event(SELECT)
+
+ 2. post the events to the end of the queue
+ 
+pygame.event.post(LEFT_EVENT)
+pygame.event.post(RIGHT_EVENT)
+pygame.event.post(SELECT_EVENT)
+"""
+
+
+
 pygame.init()
 pygame.display.set_caption("Virtual Keyboard")
 
