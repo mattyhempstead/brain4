@@ -1,0 +1,8 @@
+Files 1, 2 and 3 for each person:
+1 = BLINK + BLINK + LEFT
+2 = BLINK + BLINK + RIGHT
+3 = BLINK + BLINK + BLINK
+
+File(s) 4 and 5:
+1 = LEFT WINK 
+2 = RIGHT WINK
