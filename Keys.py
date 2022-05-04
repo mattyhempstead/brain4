@@ -1,7 +1,8 @@
 class Node:
-    def __init__(self, alpha_key, punc_key):
+    def __init__(self, alpha_key, punc_key, autocomplete=None):
         self.alpha_key = alpha_key
         self.punc_key = punc_key
+        self.autocomplete = autocomplete
 
         self.left = None
         self.right = None
@@ -42,7 +43,12 @@ class Keys:
             if i < 15:
                 tmp.append(new)
             else:
-                new.leaf = True
+                # new.leaf = True
+                new_autocomplete = Node(alpha_key=None, punc_key=None, autocomplete="")
+                new_autocomplete.leaf = True
+                new_autocomplete.parent = new
+                new.left = new_autocomplete
+                new.right = new_autocomplete
             cur = tmp[0]
             if cur.left is None:
                 cur.left = new
