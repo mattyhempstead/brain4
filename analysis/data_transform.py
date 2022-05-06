@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 import config
 
-from data import load_sample_data, load_event_data, downsample, get_time_interval
+from data_load import load_sample_data, load_event_data, downsample, get_time_interval
 from data_merge import merge_samples_events
 
 
@@ -37,6 +37,7 @@ def get_event_sequences(merge_df, event_length:float):
             time_start = row["time_sec"],
             time_end = row["time_sec"] + event_length,
         )
+
         seq = list(seq["sample"])
         seqs.append(seq)
 
@@ -48,6 +49,13 @@ def get_event_sequences(merge_df, event_length:float):
 
     seqs = np.array(seqs)
     labels = np.array(labels)
+
+    # Give a std of 1 and mean of 0
+    # Could make it so that the live streaming data also has this property based on a moving avg or smth?
+    sample_mean = merge_df["sample"].mean()
+    sample_std = merge_df["sample"].std()
+    for i,seq in enumerate(seqs):
+        seqs[i] = (seq - sample_mean) / sample_std
 
     print(f"Transformed {seqs.shape[0]} sequences of size {seqs.shape[1]}")
 

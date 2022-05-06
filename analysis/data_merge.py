@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 import config
 
-from data import load_sample_data, load_event_data, downsample, get_time_interval
+from data_load import load_sample_data, load_event_data, downsample, get_time_interval
 
 
 
@@ -28,8 +28,8 @@ def merge_samples_events(samples_df, events_df, event_start:float = -0.25, event
     # Assign all events within range around their event marker
     for idx,row in events_df.iterrows():
         # Skip blinks for now
-        if row["event_type"] not in ["Left", "Right"]:
-            continue
+        # if row["event_type"] not in ["Left", "Right"]:
+        #     continue
 
         event_interval = (merge_df["time_sec"] > (row["time_sec"] + event_start))
         event_interval &= (merge_df["time_sec"] < (row["time_sec"] + event_end))
