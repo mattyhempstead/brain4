@@ -51,7 +51,7 @@ class stream():
         ser.timeout = self.bufferSize/20000.0
         try:
             while True:
-                data = read_arduino(ser, self.bufferSize)
+                data = read_arduino(ser, self.bufferSize) # blocking
                 dataTemp = process_data(data)
                 dataActual = np.append(dataActual, dataTemp)
                 # Truncate array 
