@@ -1,4 +1,4 @@
-from type import List, Optional
+from typing import List, Optional
 
 import time
 from xml.dom.minidom import getDOMImplementation
@@ -9,6 +9,7 @@ import pandas as pd
 from BrainboxStream import BrainboxStream
 from Classify import Classify
 import filters
+import filters.downsample
 
 
 brainbox_stream = BrainboxStream()
@@ -19,7 +20,7 @@ while True:
     if data is None:
         print("No amplitude data")
         continue
-    print(len(data), data)
+    #print(len(data), data)
 
     # Filter if needed
     # data = filters.spiker_filter.LP_Filter(data)
@@ -27,7 +28,7 @@ while True:
 
     # Downsample
     data = filters.downsample.mean(data, factor=100)
-    print(len(data), data)
+    print(len(data), data[:10])
 
     # Classify
 

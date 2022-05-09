@@ -1,4 +1,4 @@
-from type import List, Optional
+from typing import List, Optional
 
 import time
 from xml.dom.minidom import getDOMImplementation
@@ -15,7 +15,7 @@ class BrainboxStream:
         self.Fs = 10000.0
         
         self.baudrate = 230400
-        self.port_num = '/dev/tty.usbserial-DJ00E33Q'
+        self.port_num = '/dev/tty.usbmodem101'
 
         # Buffer to read from brainbox
         self.window_buffer_time = 0.2
@@ -33,7 +33,7 @@ class BrainboxStream:
         return Serial(
             port=self.port_num,
             baudrate=self.baudrate,
-            timeout = self.window_buffer_length,
+            timeout = self.window_buffer_size,
         )
 
     def read_arduino(self):
@@ -59,13 +59,16 @@ class BrainboxStream:
     def read(self) -> Optional[np.array]:
         """ Read next arduino stream input and return processed data if ready """
         amp_data = self.read_amplitudes()
+        #print(amp_data)
 
         # Add to full_buffer and limit max length
-        self.full_buffer = np.append(self.full_buffer, data)
-        self.full_buffer = self.full_buffer[:-self.full_buffer_size]
-
+        self.full_buffer = np.append(self.full_buffer, amp_data)
+        #print(self.full_buffer)
+        self.full_buffer = self.full_buffer[-self.full_buffer_size:]
+        #print(self.full_buffer_size, len(self.full_buffer))
         # Return None if not ready for full sequence
         if len(self.full_buffer) < self.full_buffer_size:
+            print("Building", len(self.full_buffer))
             return
 
         self.print_time()
