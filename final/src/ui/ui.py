@@ -52,8 +52,8 @@ pygame.event.post(SELECT_EVENT)
 """
 
 # Set up the drawing window
-WIDTH, HEIGHT = 1255, 800
-RECT_X, RECT_Y = 55, 40
+WIDTH, HEIGHT = 1455, 800
+RECT_X, RECT_Y = 35, 35
 SCREEN = pygame.display.set_mode([WIDTH, HEIGHT])
 
 GREY = (100, 100, 100)
@@ -68,13 +68,13 @@ INPUT_FONT = pygame.font.Font(None, 65)
 AUTOCOMPLETE_FONT = pygame.font.Font(None, 18)
 
 NUM_LAYER = 6
-LAYER_HEIGHT = [160, 260, 380, 500, 615, 730]
-LAYER_WIDTH = [[600],
-               [445, 755],
-               [330, 485, 715, 870],
-               [230, 330, 430, 535, 665, 770, 870, 970],
-               [140, 200, 265, 325, 390, 450, 510, 570, 630, 690, 750, 810, 875, 935, 1000, 1060],
-               [140, 200, 265, 325, 390, 450, 510, 570, 630, 690, 750, 810, 875, 935, 1000, 1060]]
+LAYER_HEIGHT = [150, 240, 330, 420, 510, [600, 650], 740]
+LAYER_WIDTH = [[700],
+               [500, 900],
+               [340, 590, 790, 1060],
+               [200, 350, 500, 625, 775, 900, 1050, 1200],
+               [80, 160, 240, 320, 400, 480, 560, 640, 760, 840, 920, 1000, 1080, 1160, 1240, 1320],
+               [20, 70, 115, 165, 205, 255, 295, 340, 380, 420, 465, 505, 550, 595, 640, 685, 715, 760, 805, 850, 895, 935, 980, 1020, 1060, 1105, 1145, 1195, 1235, 1285, 1330, 1380]]
 
 KEYS = Keys.Keys()
 KEYS.init_trees()
@@ -306,6 +306,21 @@ class App:
 
 
     def draw_tree(self):
+        i = j = 0
+
+        while True:
+            tmp = KEYS.root
+            self.draw_tree_node(tmp, i, j)
+
+            j += 1
+            if i != NUM_LAYER-1:
+                if j >= len(LAYER_WIDTH[i]):
+                    i += 1
+                    j = 0
+            else:
+                if j >= len(LAYER_WIDTH[i]):
+                    return
+
         # BFS thru the nodes and draw the rectangles with the key
         fringe = [KEYS.root]
 
@@ -313,114 +328,118 @@ class App:
 
         # Pop each word as we use it
         # Temp hack gives (a,b,c) -> (a,a,b,b,c,c)
-        self.tmp_ac_words = self.autocomplete_words
-        self.tmp_ac_words = list(sum(zip(self.tmp_ac_words, self.tmp_ac_words),()))
+        # self.tmp_ac_words = self.autocomplete_words
+        # self.tmp_ac_words = list(sum(zip(self.tmp_ac_words, self.tmp_ac_words),()))
 
-        while len(fringe) > 0:
-            tmp = fringe.pop(0)
-            if not tmp.is_leaf():
-                fringe.append(tmp.left)
-                fringe.append(tmp.right)
+        # while len(fringe) > 0:
+        #     tmp = fringe.pop(0)
+        #     if not tmp.is_leaf():
+        #         fringe.append(tmp.left)
+        #         fringe.append(tmp.right)
 
-            self.draw_tree_node(tmp, i, j)
+        #     self.draw_tree_node(tmp, i, j)
 
-            j += 1
-            if i != 5:
-                if j >= len(LAYER_WIDTH[i]):
-                    i += 1
-                    j = 0
-            # else:
-            #     if j >= 2 * len(LAYER_WIDTH[i]):
-            #         i += 1
-            #         j = 0
+        #     j += 1
+        #     if i != NUM_LAYER-1:
+        #         if j >= len(LAYER_WIDTH[i]):
+        #             i += 1
+        #             j = 0
 
 
     def draw_tree_node(self, tmp, i, j):
-        if i == 5:
-            tmp.width = LAYER_WIDTH[i][j//2]
-            tmp.height = LAYER_HEIGHT[i]
+        if i == NUM_LAYER-1:
+            tmp.width = LAYER_WIDTH[i][j]
+            print(tmp.width)
+            if j % 2 == 0:
+                tmp.height = LAYER_HEIGHT[i][(j//2)%2]
+                print(tmp.height)
+            else:
+                tmp.height = LAYER_HEIGHT[i][((j-1)//2)%2]
+                print(tmp.height)
         else:
             tmp.width = LAYER_WIDTH[i][j]
             tmp.height = LAYER_HEIGHT[i]
+        
 
         tmp.rect = pygame.Rect((tmp.width, tmp.height), (RECT_X, RECT_Y))
+        pygame.draw.rect(SCREEN, BLACK, tmp.rect, 1)
 
         # draw the rectangle
-        if not tmp.is_leaf():
-            pygame.draw.rect(SCREEN, BLACK, tmp.rect, 1)
-        else:
-            # if k < 2 * len(self.autocomplete_words) and self.alpha:
-            if len(self.tmp_ac_words) > 0:
-                tmp.autocomplete = self.tmp_ac_words.pop()[0]
-                pygame.draw.rect(SCREEN, BLACK, tmp.rect, 1)
-            else:
-                tmp.autocomplete = ""
+        # if not tmp.is_leaf():
+        #     pygame.draw.rect(SCREEN, BLACK, tmp.rect, 1)
+        # else:
+        #     # if k < 2 * len(self.autocomplete_words) and self.alpha:
+        #     if len(self.tmp_ac_words) > 0:
+        #         tmp.autocomplete = self.tmp_ac_words.pop()[0]
+        #         pygame.draw.rect(SCREEN, BLACK, tmp.rect, 1)
+        #     else:
+        #         tmp.autocomplete = ""
 
-        # draw the lines connecting to the children
-        if not tmp.is_root() and tmp.autocomplete != "":
-            start_pos = (tmp.width + 27.5, tmp.height)
-            end_pos = (tmp.parent.width + 27.5, tmp.parent.height + 40)
+        # # draw the lines connecting to the children
+        # if not tmp.is_root() and tmp.autocomplete != "":
+        #     start_pos = (tmp.width + 27.5, tmp.height)
+        #     end_pos = (tmp.parent.width + 27.5, tmp.parent.height + 40)
 
-            pygame.draw.line(SCREEN, BLACK, start_pos, end_pos)
+        #     pygame.draw.line(SCREEN, BLACK, start_pos, end_pos)
 
-        # create surface for keys
-        rect_surf = pygame.Surface((RECT_X-2, RECT_Y-2))
-        if self.cursor.width == tmp.width and self.cursor.height == tmp.height:
-            rect_surf.fill(LIGHT_GREY)
-        else:
-            rect_surf.fill(WHITE)
+        # # create surface for keys
+        # rect_surf = pygame.Surface((RECT_X-2, RECT_Y-2))
+        # if self.cursor.width == tmp.width and self.cursor.height == tmp.height:
+        #     rect_surf.fill(LIGHT_GREY)
+        # else:
+        #     rect_surf.fill(WHITE)
 
         # key, option or autocomplete
-        if self.alpha:
-            key = tmp.alpha_key
-            if key is None:
-                key = tmp.autocomplete
-                if key != "":
-                    surface = AUTOCOMPLETE_FONT.render(key, True, DARK_GREY)
-                    rect_surf.blit(surface, (1,8))
-                    SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
+        # if self.alpha:
+        #     key = tmp.alpha_key
+        #     if key is None:
+        #         key = tmp.autocomplete
+        #         if key != "":
+        #             surface = AUTOCOMPLETE_FONT.render(key, True, DARK_GREY)
+        #             rect_surf.blit(surface, (1,8))
+        #             SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
 
-            elif len(tmp.alpha_key) > 1:
-                if key == "U/L":
-                    if self.upper:
-                        key = "Lower"
-                    else:
-                        key = "Upper"
-                surface = OPTION_FONT.render(key, True, DARK_GREY)
+        #     elif len(tmp.alpha_key) > 1:
+        #         if key == "U/L":
+        #             if self.upper:
+        #                 key = "Lower"
+        #             else:
+        #                 key = "Upper"
+        #         surface = OPTION_FONT.render(key, True, DARK_GREY)
 
-                if len(key) == 5:
-                    rect_surf.blit(surface, (1, 8))
-                elif len(key) == 3:
-                    rect_surf.blit(surface, (8, 8))
-                else:
-                    rect_surf.blit(surface, (0, 8))
+        #         if len(key) == 5:
+        #             rect_surf.blit(surface, (1, 8))
+        #         elif len(key) == 3:
+        #             rect_surf.blit(surface, (8, 8))
+        #         else:
+        #             rect_surf.blit(surface, (0, 8))
 
-                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
-            else:
-                if not self.upper:
-                    key = key.lower()
+        #         SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
+        #     else:
+        #         if not self.upper:
+        #             key = key.lower()
 
-                surface = KEY_FONT.render(key, True, DARK_GREY)
-                rect_surf.blit(surface, (16, 4))
-                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
-        else:
-            if tmp.is_leaf():
-                return
-            if len(str(tmp.punc_key)) > 1:
-                surface = OPTION_FONT.render(tmp.punc_key, True, DARK_GREY)
+        #         surface = KEY_FONT.render(key, True, DARK_GREY)
+        #         rect_surf.blit(surface, (16, 4))
+        #         SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
+        # else:
+            # if tmp.is_leaf():
+            #     return
+            # if len(str(tmp.punc_key)) > 1:
+            #     surface = OPTION_FONT.render(tmp.punc_key, True, DARK_GREY)
 
-                if len(tmp.punc_key) == 5:
-                    rect_surf.blit(surface, (1, 8))
-                elif len(tmp.punc_key) == 3:
-                    rect_surf.blit(surface, (8, 8))
-                else:
-                    rect_surf.blit(surface, (0, 8))
+            #     if len(tmp.punc_key) == 5:
+            #         rect_surf.blit(surface, (1, 8))
+            #     elif len(tmp.punc_key) == 3:
+            #         rect_surf.blit(surface, (8, 8))
+            #     else:
+            #         rect_surf.blit(surface, (0, 8))
 
-                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
-            else:
-                surface = KEY_FONT.render(str(tmp.punc_key), True, DARK_GREY)
-                rect_surf.blit(surface, (15, 4))
-                SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
+            #     SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
+            # else:
+            #     surface = KEY_FONT.render(str(tmp.punc_key), True, DARK_GREY)
+            #     rect_surf.blit(surface, (15, 4))
+            #     SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
 
 
 
