@@ -222,16 +222,14 @@ class App:
             elif key == "U/L":
                 self.upper = not self.upper
             elif key == "123":
-                self.cursor.not_select()
-                self.cursor = self.tree.get_root()
-                self.cursor.select()
                 self.alpha = False
             elif key == "ABC":
                 self.upper = False
-                self.cursor.not_select()
-                self.cursor = self.tree.get_root()
-                self.cursor.select()
                 self.alpha = True
+                
+            self.cursor.not_select()
+            self.cursor = self.tree.get_root()
+            self.cursor.select()
 
         # if self.current_word != "":
         #     self.autocomplete_words = AUTOCOMPLETE.search(word=self.current_word, max_cost=3, size=16)
