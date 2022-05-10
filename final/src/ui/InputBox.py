@@ -30,13 +30,13 @@ class InputBox:
     def new_line(self):
         self.user_input.append("")
 
-    def render(self, SCREEN, p):
-        input_bar = p.Rect((INPUT_WIDTH, INPUT_HEIGHT), (INPUT_X, INPUT_Y))
+    def render(self):
+        input_bar = pygame.Rect((INPUT_WIDTH, INPUT_HEIGHT), (INPUT_X, INPUT_Y))
         pygame.draw.rect(SCREEN, INPUT_BACKGROUND_COLOR, input_bar)
 
         input_text = []
         for line in self.user_input:
-            input_text.append(p.font.Font(None, 30).render(line, True, INPUT_FOREGROUND_COLOR))
+            input_text.append(pygame.font.Font(None, 30).render(line, True, INPUT_FOREGROUND_COLOR))
         
         for i in range(0, len(input_text)):
             SCREEN.blit(input_text[i], (INPUT_WIDTH, INPUT_HEIGHT + 2 + 20 * i))

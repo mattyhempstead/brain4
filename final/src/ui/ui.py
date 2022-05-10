@@ -3,72 +3,6 @@ import pygame, os, signal
 from Tree import Tree
 from InputBox import InputBox
 from setting import *
-from fast_autocomplete import AutoComplete
-
-from pygame.locals import (
-    K_LEFT,
-    K_RIGHT,
-    K_RETURN,
-    KEYDOWN,
-    QUIT,
-)
-
-# import words for autocomplete
-WORDS = {}
-""" 
-words_10000.txt: https://www.mit.edu/~ecprice/wordlist.10000
-words_10000_github.txt: https://github.com/first20hours/google-10000-english/blob/master/google-10000-english.txt
-"""
-file = open("words_10000.txt", "r")
-for word in file.read().split():
-    WORDS[word] = {}
-AUTOCOMPLETE = AutoComplete(words=WORDS)
-
-
-# init the game
-pygame.init()
-pygame.display.set_caption("Virtual Keyboard")
-
-# custom event
-LEFT = pygame.USEREVENT + 1
-RIGHT = pygame.USEREVENT + 2
-SELECT = pygame.USEREVENT + 3
-
-LEFT_EVENT = pygame.event.Event(LEFT)
-RIGHT_EVENT = pygame.event.Event(RIGHT)
-SELECT_EVENT = pygame.event.Event(SELECT)
-
-""" 
-----call the events----
- 1. Convert event to Pygame's event datatype
-
-LEFT_EVENT = pygame.event.Event(LEFT)
-RIGHT_EVENT = pygame.event.Event(RIGHT)
-SELECT_EVENT = pygame.event.Event(SELECT)
-
- 2. post the events to the end of the queue
-
-pygame.event.post(LEFT_EVENT)
-pygame.event.post(RIGHT_EVENT)
-pygame.event.post(SELECT_EVENT)
-"""
-
-# Set up the drawing window
-WIDTH, HEIGHT = 1455, 800
-RECT_X, RECT_Y = 35, 35
-SCREEN = pygame.display.set_mode([WIDTH, HEIGHT])
-
-def signal_handler(signum, stack):
-    print("sighandler " + str(signum))
-    if signum == 30:
-        pygame.event.post(LEFT_EVENT)
-    elif signum == 31:
-        pygame.event.post(RIGHT_EVENT)
-    elif signum == 28:
-        pygame.event.post(SELECT_EVENT)
-
-
-FPS = 30  # None for unlimited
 
 class App:
     def __init__(self):
@@ -309,9 +243,9 @@ class App:
         SCREEN.fill(WHITE)
 
         # draw the text input box
-        self.input_box.render(SCREEN, pygame)
+        self.input_box.render()
 
-        self.tree.render(SCREEN, self.alpha, self.upper, pygame)
+        self.tree.render(self.alpha, self.upper)
 
         if FPS is not None:
             self.clock.tick(FPS)

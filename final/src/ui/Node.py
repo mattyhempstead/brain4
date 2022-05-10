@@ -1,6 +1,9 @@
 import pygame
 from setting import *
 
+from text import draw_text
+
+
 class Node:
     def __init__(self, layer:int, height:int, width:int, alpha_key=None, punc_key=None, root=False, leaf=False):
         self.left_child = None
@@ -69,22 +72,18 @@ class Node:
     def set_parent(self, parent):
         self.parent = parent
 
-    def render(self, SCREEN, alpha, upper, p):
+    @property
+    def rect(self):
+        return pygame.Rect((self.width, self.height), (NODE_LENGTH, NODE_LENGTH))
+
+    def render(self, alpha, upper):
         # draw the rectangle
-        rect = p.Rect((self.width, self.height), (NODE_LENGTH, NODE_LENGTH))
-        p.draw.rect(SCREEN, BLACK, rect, 1)
+        pygame.draw.rect(SCREEN, BLACK, self.rect, 1)
 
-        # draw the lines connecting to children if not a leaf
-        if not self.is_leaf():
-            start = (self.width + NODE_LENGTH/2, self.height + NODE_LENGTH)
-            end_left = (self.left_child.width + NODE_LENGTH/2, self.left_child.height)
-            end_right = (self.right_child.width + NODE_LENGTH/2, self.right_child.height)
-
-            p.draw.line(SCREEN, BLACK, start, end_left)
-            p.draw.line(SCREEN, BLACK, start, end_right)
+        self.render_edges(alpha, upper)
 
         # fill the node
-        rect_surf = p.Surface((NODE_LENGTH-2, NODE_LENGTH-2))
+        rect_surf = pygame.Surface((NODE_LENGTH-2, NODE_LENGTH-2))
         if self.selected:
             rect_surf.fill(LIGHT_GREY)
         else:
@@ -101,7 +100,7 @@ class Node:
                             key = "Lower"
                         else:
                             key = "Upper"
-                    surface = p.font.Font(None, 15).render(key, True, DARK_GREY)
+                    surface = pygame.font.Font(None, 15).render(key, True, DARK_GREY)
                     if len(key) == 5:
                         rect_surf.blit(surface, (1, 10))
                     elif len(key) == 3:
@@ -116,13 +115,13 @@ class Node:
                     if not upper:
                         key = key.lower()
 
-                    surface = p.font.Font(None, 45).render(key, True, DARK_GREY)
+                    surface = pygame.font.Font(None, 45).render(key, True, DARK_GREY)
                     rect_surf.blit(surface, (8, 2))
                     SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))
             
             else:
                 if len(str(self.punc_key)) > 1:
-                    surface = p.font.Font(None, 15).render(self.punc_key, True, DARK_GREY)
+                    surface = pygame.font.Font(None, 15).render(self.punc_key, True, DARK_GREY)
 
                     if len(self.punc_key) == 5:
                         rect_surf.blit(surface, (1, 10))
@@ -133,9 +132,57 @@ class Node:
 
                     SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))
                 else:
-                    surface = p.font.Font(None, 40).render(self.punc_key, True, DARK_GREY)
+                    surface = pygame.font.Font(None, 40).render(self.punc_key, True, DARK_GREY)
                     rect_surf.blit(surface, (8, 2))
                     SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))                
         else:
             SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))
         
+
+    def render_edges(self, alpha, upper):
+        """ draw the lines connecting to children if not a leaf """
+        if self.is_leaf():
+            return
+
+        start = self.rect.midbottom
+        end_left = self.left_child.rect.midtop
+        end_right = self.right_child.rect.midtop
+
+        pygame.draw.line(SCREEN, BLACK, start, end_left)
+        pygame.draw.line(SCREEN, BLACK, start, end_right)
+
+
+        if self.selected: 
+            edge_left_midpoint = (
+                (start[0] + end_left[0]) / 2,
+                (start[1] + end_left[1]) / 2,
+            )
+            draw_text(
+                text = "L",
+                pos = edge_left_midpoint,
+                size = 25,
+                color = DARK_GREY
+            )
+
+            edge_right_midpoint = (
+                (start[0] + end_right[0]) / 2,
+                (start[1] + end_right[1]) / 2,
+            )
+            draw_text(
+                text = "R",
+                pos = edge_right_midpoint,
+                size = 25,
+                color = DARK_GREY
+            )
+
+            if self.parent is not None:
+                edge_parent_midpoint = (
+                    (self.rect.midtop[0] + self.parent.rect.midbottom[0]) / 2,
+                    (self.rect.midtop[1] + self.parent.rect.midbottom[1]) / 2,
+                )
+                draw_text(
+                    text = "B",
+                    pos = edge_parent_midpoint,
+                    size = 25,
+                    color = DARK_GREY
+                )

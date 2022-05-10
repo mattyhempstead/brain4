@@ -53,12 +53,12 @@ class Tree:
                 cur.set_right(new)
                 tmp.pop(0)
 
-    def render(self, SCREEN, alpha, upper, p):
+    def render(self, alpha, upper):
         fringe = [self.root]
 
         while len(fringe) > 0:
             tmp = fringe.pop(0)
-            tmp.render(SCREEN, alpha, upper, p)
+            tmp.render(alpha, upper)
 
             if not tmp.is_leaf():
                 fringe.append(tmp.get_left())
@@ -75,7 +75,3 @@ class Tree:
             if not tmp.is_leaf():
                 fringe.append(tmp.left_child)
                 fringe.append(tmp.right_child)
-
-        
-            
-
