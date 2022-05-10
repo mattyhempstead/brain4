@@ -1,9 +1,9 @@
 import pygame
+from typing import Tuple
+
 from setting import *
 
 from text import draw_text
-
-
 
 
 class Node:
@@ -16,6 +16,12 @@ class Node:
     BACKGROUND_COLOR = WHITE
     BACKGROUND_COLOR_LEAF = (247, 246, 220)
     BACKGROUND_COLOR_SELECTED = (171,188,214)
+
+    EDGE_TEXT_FONT_SIZE = 22
+    EDGE_TEXT_CIRCLE_RADIUS = 10
+    EDGE_TEXT_CIRCLE_COLOR = (185, 222, 240)
+    EDGE_TEXT_CIRCLE_BORDER_COLOR = BLACK
+
 
     def __init__(self, layer:int, height:int, width:int, alpha_key=None, punc_key=None, root=False, leaf=False):
         self.left_child = None
@@ -128,35 +134,47 @@ class Node:
                 (start[0] + end_left[0]) / 2,
                 (start[1] + end_left[1]) / 2,
             )
-            draw_text(
-                text = "L",
-                pos = edge_left_midpoint,
-                size = 25,
-                color = DARK_GREY
-            )
+            self.render_edge_text("L", edge_left_midpoint)
 
             edge_right_midpoint = (
                 (start[0] + end_right[0]) / 2,
                 (start[1] + end_right[1]) / 2,
             )
-            draw_text(
-                text = "R",
-                pos = edge_right_midpoint,
-                size = 25,
-                color = DARK_GREY
-            )
+            self.render_edge_text("R", edge_right_midpoint)
 
             if self.parent is not None:
                 edge_parent_midpoint = (
                     (self.rect.midtop[0] + self.parent.rect.midbottom[0]) / 2,
                     (self.rect.midtop[1] + self.parent.rect.midbottom[1]) / 2,
                 )
-                draw_text(
-                    text = "B",
-                    pos = edge_parent_midpoint,
-                    size = 25,
-                    color = DARK_GREY
-                )
+                self.render_edge_text("B", edge_parent_midpoint)
+
+
+    def render_edge_text(self, text:str, pos:Tuple[int,int]):
+        # Circle background
+        pygame.draw.circle(
+            SCREEN, 
+            Node.EDGE_TEXT_CIRCLE_COLOR,
+            pos, 
+            Node.EDGE_TEXT_CIRCLE_RADIUS
+        )
+
+        # Circle border
+        pygame.draw.circle(
+            SCREEN, 
+            Node.EDGE_TEXT_CIRCLE_BORDER_COLOR,
+            pos, 
+            Node.EDGE_TEXT_CIRCLE_RADIUS,
+            1
+        )
+
+        # Text
+        draw_text(
+            text = text,
+            pos = pos,
+            size = Node.EDGE_TEXT_FONT_SIZE,
+            color = DARK_GREY
+        )
 
 
     def render_text(self, alpha, upper):
