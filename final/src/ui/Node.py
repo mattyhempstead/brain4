@@ -165,43 +165,28 @@ class Node:
         if self.is_leaf():
             if alpha:
                 key = self.alpha_key
-                
-                if len(key) > 1:
-                    # options
-                    if key == "U/L":
-                        if upper:
-                            key = "Lower"
-                        else:
-                            key = "Upper"
-                    surface = pygame.font.Font(None, 15).render(key, True, DARK_GREY)
-                    if len(key) == 5:
-                        rect_surf.blit(surface, (1, 10))
-                    elif len(key) == 3:
-                        rect_surf.blit(surface, (8, 10))
+                if key == "U/L":
+                    if upper:
+                        key = "Lower"
                     else:
-                        rect_surf.blit(surface, (0, 10))
-
+                        key = "Upper"
                 else:
                     # alphabets
-                    if not upper:
+                    if not upper and len(key) == 1:
                         key = key.lower()
-
-                    surface = pygame.font.Font(None, 45).render(key, True, DARK_GREY)
-                    rect_surf.blit(surface, (8, 2))
-            
             else:
-                if len(str(self.punc_key)) > 1:
-                    surface = pygame.font.Font(None, 15).render(self.punc_key, True, DARK_GREY)
+                key = self.punc_key
 
-                    if len(self.punc_key) == 5:
-                        rect_surf.blit(surface, (1, 10))
-                    elif len(self.punc_key) == 3:
-                        rect_surf.blit(surface, (8, 10))
-                    else:
-                        rect_surf.blit(surface, (0, 10))
+            font_size = 40
+            if len(key) > 1:
+                font_size = 17
 
-                else:
-                    surface = pygame.font.Font(None, 40).render(self.punc_key, True, DARK_GREY)
-                    rect_surf.blit(surface, (8, 2))
+            draw_text(
+                text = key,
+                pos = rect_surf.get_rect().center,
+                size = font_size,
+                color = DARK_GREY,
+                surface = rect_surf,
+            )
 
         SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))

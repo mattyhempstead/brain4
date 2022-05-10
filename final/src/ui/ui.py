@@ -146,7 +146,7 @@ class App:
             self.cursor = KEYS.root
             self.cursor.select()
             self.alpha = False
-        elif key == "abc":
+        elif key == "ABC":
             self.upper = False
             self.cursor.not_select()
             self.cursor = KEYS.root
@@ -226,7 +226,7 @@ class App:
                 self.cursor = self.tree.get_root()
                 self.cursor.select()
                 self.alpha = False
-            elif key == "abc":
+            elif key == "ABC":
                 self.upper = False
                 self.cursor.not_select()
                 self.cursor = self.tree.get_root()

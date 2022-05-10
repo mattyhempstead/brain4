@@ -12,7 +12,7 @@ def get_font(size:int):
     return pygame.font.Font(None, size)
 
 
-def draw_text(text:str, pos:Tuple[int,int], size:int, color=BLACK, center=True):
+def draw_text(text:str, pos:Tuple[int,int], size:int, color=BLACK, center=True, surface=SCREEN):
     """
     Draws text on screen.
 
@@ -32,5 +32,5 @@ def draw_text(text:str, pos:Tuple[int,int], size:int, color=BLACK, center=True):
     if center:
         text_rect.center = pos
 
-    SCREEN.blit(text, text_rect)
+    surface.blit(text, text_rect)
 

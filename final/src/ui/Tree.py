@@ -6,7 +6,7 @@ class Tree:
     def __init__(self):
         self.root = None
         self.alpha_keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Space', '123', 'U/L', 'Delete', 'Clear', 'Return']
-        self.punc_keys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', ':', ';', '/', '?', '!', '\'', '\"', '@', '&', '-', '_', '(', ')', '[', ']', 'Space', 'abc', 'Delete', 'Clear', 'Return']
+        self.punc_keys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', ':', ';', '/', '?', '!', '\'', '\"', '@', '&', '-', '_', '(', ')', '[', ']', 'Space', 'ABC', 'Delete', 'Clear', 'Return']
     
     def get_root(self):
         return self.root
