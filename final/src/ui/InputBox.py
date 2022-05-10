@@ -1,4 +1,6 @@
 import pygame
+import time
+from text import draw_text
 
 from setting import *
 
@@ -8,8 +10,22 @@ class InputBox:
 
     FOREGROUND_COLOR = DARK_GREY
 
+    CURSOR_BLINK_TIME = 0.5
+    CURSOR_COLOR = DARK_GREY
+
+    LINE_HEIGHT = 22
+
+    X_POS = 800
+    Y_POS = 100
+    WIDTH = 300
+    HEIGHT = 30
+
     def __init__(self):
         self.user_input = [""]
+
+        self.cursor_visible = False
+        self.cursor_blink_timer = 0
+
 
     def clear_text(self):
         self.user_input = [""]
@@ -36,7 +52,7 @@ class InputBox:
         self.render_text()
 
     def render_box(self):
-        input_bar = pygame.Rect((INPUT_WIDTH, INPUT_HEIGHT), (INPUT_X, INPUT_Y))
+        input_bar = pygame.Rect((InputBox.WIDTH, InputBox.HEIGHT), (InputBox.X_POS, InputBox.Y_POS))
         pygame.draw.rect(SCREEN, InputBox.BACKGROUND_COLOR, input_bar)
         pygame.draw.rect(SCREEN, InputBox.BORDER_COLOR, input_bar, 1)
 
@@ -46,4 +62,31 @@ class InputBox:
             input_text.append(pygame.font.Font(None, 30).render(line, True, InputBox.FOREGROUND_COLOR))
         
         for i in range(0, len(input_text)):
-            SCREEN.blit(input_text[i], (INPUT_WIDTH + 3, INPUT_HEIGHT + 2 + 20 * i + 2))
+            rect_pos = (
+                InputBox.WIDTH + 3, 
+                InputBox.HEIGHT + 2 + InputBox.LINE_HEIGHT * i + 2
+            )
+            SCREEN.blit(input_text[i], rect_pos)
+
+            if i == len(input_text) - 1:
+                self.render_cursor(input_text[i].get_rect(), rect_pos)
+
+    def render_cursor(self, rect_text, rect_pos):
+        if time.time() >= self.cursor_blink_timer:
+            # Toggle cursor and reset time
+            self.cursor_blink_timer = time.time() + InputBox.CURSOR_BLINK_TIME
+            self.cursor_visible = not self.cursor_visible
+
+        if not self.cursor_visible:
+            return
+
+        rect_text.topleft = rect_pos
+
+        cursor_top = rect_text.topright
+        cursor_top = (cursor_top[0] + 2, cursor_top[1])
+
+        cursor_bottom = rect_text.bottomright
+        cursor_bottom = (cursor_bottom[0] + 2, cursor_bottom[1] - 4)
+
+        pygame.draw.line(SCREEN, InputBox.CURSOR_COLOR, cursor_top, cursor_bottom, 2)
+
