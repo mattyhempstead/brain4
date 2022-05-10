@@ -5,6 +5,8 @@ from InputBox import InputBox
 from setting import *
 
 class App:
+    BACKGROUND_COLOR = LIGHT_GREY
+
     def __init__(self):
         print(2, os.getpid())
 
@@ -240,7 +242,7 @@ class App:
     def render(self):
 
         # fill the background with white
-        SCREEN.fill(WHITE)
+        SCREEN.fill(App.BACKGROUND_COLOR)
 
         # draw the text input box
         self.input_box.render()

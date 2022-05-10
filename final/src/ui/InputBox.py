@@ -2,11 +2,12 @@ import pygame
 
 from setting import *
 
-INPUT_BACKGROUND_COLOR = LIGHT_GREY
-INPUT_FOREGROUND_COLOR = DARK_GREY
-
-
 class InputBox:
+    BORDER_COLOR = BLACK
+    BACKGROUND_COLOR = WHITE
+
+    FOREGROUND_COLOR = DARK_GREY
+
     def __init__(self):
         self.user_input = [""]
 
@@ -31,12 +32,18 @@ class InputBox:
         self.user_input.append("")
 
     def render(self):
-        input_bar = pygame.Rect((INPUT_WIDTH, INPUT_HEIGHT), (INPUT_X, INPUT_Y))
-        pygame.draw.rect(SCREEN, INPUT_BACKGROUND_COLOR, input_bar)
+        self.render_box()
+        self.render_text()
 
+    def render_box(self):
+        input_bar = pygame.Rect((INPUT_WIDTH, INPUT_HEIGHT), (INPUT_X, INPUT_Y))
+        pygame.draw.rect(SCREEN, InputBox.BACKGROUND_COLOR, input_bar)
+        pygame.draw.rect(SCREEN, InputBox.BORDER_COLOR, input_bar, 1)
+
+    def render_text(self):
         input_text = []
         for line in self.user_input:
-            input_text.append(pygame.font.Font(None, 30).render(line, True, INPUT_FOREGROUND_COLOR))
+            input_text.append(pygame.font.Font(None, 30).render(line, True, InputBox.FOREGROUND_COLOR))
         
         for i in range(0, len(input_text)):
-            SCREEN.blit(input_text[i], (INPUT_WIDTH, INPUT_HEIGHT + 2 + 20 * i))
+            SCREEN.blit(input_text[i], (INPUT_WIDTH + 3, INPUT_HEIGHT + 2 + 20 * i + 2))
