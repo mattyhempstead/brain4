@@ -5,7 +5,7 @@ from xml.dom.minidom import getDOMImplementation
 from serial import Serial
 import numpy as np
 import pandas as pd
-
+import glob
 
 class BrainboxStream:
     def __init__(self):
@@ -15,7 +15,15 @@ class BrainboxStream:
         self.Fs = 10000.0
         
         self.baudrate = 230400
-        self.port_num = '/dev/tty.usbmodem101'
+
+        # Check for serial name (MAC specific)
+        if glob.glob('/dev/tty.usbserial*'):
+            serialName = glob.glob('/dev/tty.usbserial*')
+        elif glob.glob('/dev/tty.usbmodem*'):
+            serialName = glob.glob('/dev/tty.usbmodem*')
+        else:
+            print('SERIAL NOT DETECTED')
+        self.port_num = serialName[0]
 
         # Buffer to read from brainbox
         self.window_buffer_time = 0.2
