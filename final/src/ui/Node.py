@@ -14,6 +14,7 @@ class Node:
     BORDER_COLOR = BLACK
 
     BACKGROUND_COLOR = WHITE
+    BACKGROUND_COLOR_LEAF = (247, 246, 220)
     BACKGROUND_COLOR_SELECTED = (171,188,214)
 
     def __init__(self, layer:int, height:int, width:int, alpha_key=None, punc_key=None, root=False, leaf=False):
@@ -99,6 +100,8 @@ class Node:
     def render_rect(self):
         # fill rect
         fill_colour = Node.BACKGROUND_COLOR
+        if self.leaf:
+            fill_colour = Node.BACKGROUND_COLOR_LEAF
         if self.selected:
             fill_colour = Node.BACKGROUND_COLOR_SELECTED
         pygame.draw.rect(SCREEN, fill_colour, self.rect, 0, Node.BORDER_RADIUS)
