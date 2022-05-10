@@ -177,8 +177,11 @@ class Node:
             else:
                 key = self.punc_key
 
-            font_size = 40
-            if len(key) > 1:
+            if len(key) == 1:
+                font_size = 40
+            elif len(key) == 3:
+                font_size = 22
+            else:
                 font_size = 17
 
             draw_text(
