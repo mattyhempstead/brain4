@@ -6,8 +6,7 @@ def LP_Filter(rawData):
     Fs = 10000
     order = 5
     cutOff = 7 # Hz
-    normalizedCutOff = cutOff/Fs
-    b, a = signal.butter(order, Wn=normalizedCutOff) 
+    b, a = signal.butter(order, Wn=cutOff/(Fs/2)) 
     # Zero Phase double filter
     filteredSignal = signal.filtfilt(b, a, rawData)
     return filteredSignal
