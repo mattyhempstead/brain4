@@ -1,6 +1,8 @@
 # Import and initialize the pygame library
 import pygame, os, signal
-import Keys
+from Tree import Tree
+from InputBox import InputBox
+from setting import *
 from fast_autocomplete import AutoComplete
 
 from pygame.locals import (
@@ -56,34 +58,6 @@ WIDTH, HEIGHT = 1455, 800
 RECT_X, RECT_Y = 35, 35
 SCREEN = pygame.display.set_mode([WIDTH, HEIGHT])
 
-GREY = (100, 100, 100)
-DARK_GREY = (20, 20, 20)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-LIGHT_GREY = (211, 211, 211)
-
-KEY_FONT = pygame.font.Font(None, 45)
-OPTION_FONT = pygame.font.Font(None, 25)
-INPUT_FONT = pygame.font.Font(None, 65)
-AUTOCOMPLETE_FONT = pygame.font.Font(None, 18)
-
-NUM_LAYER = 6
-LAYER_HEIGHT = [150, 240, 330, 420, 510, [600, 650], 740]
-LAYER_WIDTH = [[700],
-               [500, 900],
-               [340, 590, 790, 1060],
-               [200, 350, 500, 625, 775, 900, 1050, 1200],
-               [80, 160, 240, 320, 400, 480, 560, 640, 760, 840, 920, 1000, 1080, 1160, 1240, 1320],
-               [20, 70, 115, 165, 205, 255, 295, 340, 380, 420, 465, 505, 550, 595, 640, 685, 715, 760, 805, 850, 895, 935, 980, 1020, 1060, 1105, 1145, 1195, 1235, 1285, 1330, 1380]]
-
-KEYS = Keys.Keys()
-KEYS.init_trees()
-KEYS.root.height = LAYER_HEIGHT[0]
-KEYS.root.width = LAYER_WIDTH[0][0]
-
-INPUT_WIDTH = 330
-INPUT_HEIGHT = 50
-
 def signal_handler(signum, stack):
     print("sighandler " + str(signum))
     if signum == 30:
@@ -96,21 +70,25 @@ def signal_handler(signum, stack):
 
 FPS = 30  # None for unlimited
 
-
 class App:
     def __init__(self):
         print(2, os.getpid())
 
         self.running = True
+        self.alpha = True
+        self.upper = False
+
         self.user_input = ""
         self.current_word = ""
         self.autocomplete_words = []
         self.pre_auto = False
-        self.alpha = True
-        self.upper = False
-        self.cursor = KEYS.root
 
-
+        self.tree = Tree()
+        self.tree.init_trees()
+        self.cursor = self.tree.get_root()
+        self.cursor.select()
+        
+        self.input_box = InputBox()
 
     def start(self):
         self.clock = pygame.time.Clock()
@@ -132,7 +110,7 @@ class App:
                 elif event.type == SELECT:
                     self.event_select()
                 elif event.type == KEYDOWN:
-                    # move the cursor by key pressed
+                    # move the cursor by keypresses
                     self.event_keydown(event)
                 
                 if self.current_word != "":
@@ -148,135 +126,179 @@ class App:
         self.running = False
 
     def event_left(self):
-        if not self.alpha and self.cursor.left.is_leaf():
-            self.cursor = KEYS.root
-        elif self.cursor.is_leaf() or self.cursor.left.autocomplete == "":
-            self.cursor = KEYS.root
+        # if not self.alpha and self.cursor.left.is_leaf():
+        #     self.cursor = KEYS.root
+        # elif self.cursor.is_leaf() or self.cursor.left.autocomplete == "":
+        #     self.cursor = KEYS.root
+        # else:
+        #     self.cursor = self.cursor.left
+        self.cursor.not_select()
+        if self.cursor.is_leaf():
+            self.cursor = self.tree.get_root()
         else:
-            self.cursor = self.cursor.left
+            self.cursor = self.cursor.get_left()
+        self.cursor.select()
+        
 
     def event_right(self):
-        if not self.alpha and self.cursor.right.is_leaf():
-            self.cursor = KEYS.root
-        elif self.cursor.is_leaf() or self.cursor.right.autocomplete == "":
-            self.cursor = KEYS.root
+        # if not self.alpha and self.cursor.right.is_leaf():
+        #     self.cursor = KEYS.root
+        # elif self.cursor.is_leaf() or self.cursor.right.autocomplete == "":
+        #     self.cursor = KEYS.root
+        # else:
+        #     self.cursor = self.cursor.right
+        self.cursor.not_select()
+        if self.cursor.is_leaf():
+            self.cursor = self.tree.get_root()
         else:
-            self.cursor = self.cursor.right
+            self.cursor = self.cursor.get_right()
+        self.cursor.select()
+
 
     def event_select(self):
         key = ""
+
+        # move back if not a leaf
+        if not self.cursor.is_leaf():
+            if self.cursor.is_root():
+                return
+            self.cursor.not_select()
+            self.cursor = self.cursor.get_parent()
+            self.cursor.select()
+            return
+        
         if self.alpha:
-            key = self.cursor.alpha_key
-            if key is None:
-                key = self.cursor.autocomplete
-                if not self.pre_auto:
-                    self.user_input = (" ".join(self.user_input.split(" ")[:-1]) + " " + key).strip()
-                else:
-                    self.user_input += " " + key
-                # self.current_word = ""
-                self.pre_auto = True
-            else:
-                self.pre_auto = False
+            key = self.cursor.get_alpha_key()
+            # if key is None:
+            #     key = self.cursor.autocomplete
+            #     if not self.pre_auto:
+            #         self.user_input = (" ".join(self.user_input.split(" ")[:-1]) + " " + key).strip()
+            #     else:
+            #         self.user_input += " " + key
+            #     # self.current_word = ""
+            #     self.pre_auto = True
+            # else:
+            #     self.pre_auto = False
         else:
-            key = self.cursor.punc_key
+            key = self.cursor.get_punc_key()
             self.pre_auto = False
 
         if len(key) == 1:
             if not self.upper and key.isalpha():
-                self.user_input += key.lower()
+                self.input_box.append_text(key.lower())
                 self.current_word += key.lower()
             else:
-                self.user_input += key
+                self.input_box.append_text(key)
                 self.current_word += key
                 if not self.alpha:
                     self.current_word = ""
         elif key == "Space":
-            self.user_input += " "
+            self.input_box.append_text(" ")
             self.current_word = ""
-            print('reset')
         elif key == "Delete":
-            self.user_input = self.user_input[:-1]
+            self.input_box.delete_text()
             self.current_word = self.current_word[:-1]
+        elif key == "Return":
+            self.input_box.new_line()
         elif key == "Clear":
-            self.user_input = ""
+            self.input_box.clear_text()
             self.current_word = ""
         elif key == "U/L":
             self.upper = not self.upper
         elif key == "123":
+            self.cursor.not_select()
             self.cursor = KEYS.root
+            self.cursor.select()
             self.alpha = False
         elif key == "abc":
             self.upper = False
+            self.cursor.not_select()
             self.cursor = KEYS.root
+            self.cursor.select()
             self.alpha = True
 
+
     def event_keydown(self, event):
-
         if event.key == K_LEFT:
-            if not self.alpha and self.cursor.left.is_leaf():
-                self.cursor = KEYS.root
-            elif self.cursor.is_leaf() or self.cursor.left.autocomplete == "":
-                self.cursor = KEYS.root
+            self.cursor.not_select()
+            if self.cursor.is_leaf():
+                self.cursor = self.tree.get_root()
             else:
-                self.cursor = self.cursor.left
+                self.cursor = self.cursor.get_left()
+            self.cursor.select()
 
-        if event.key == K_RIGHT:
-            if not self.alpha and self.cursor.right.is_leaf():
-                self.cursor = KEYS.root
-            elif self.cursor.is_leaf() or self.cursor.right.autocomplete == "":
-                self.cursor = KEYS.root
+        elif event.key == K_RIGHT:
+            self.cursor.not_select()
+            if self.cursor.is_leaf():
+                self.cursor = self.tree.get_root()
             else:
-                self.cursor = self.cursor.right
+                self.cursor = self.cursor.get_right()
+            self.cursor.select()
 
-        if event.key == K_RETURN:
+        elif event.key == K_RETURN:
             key = ""
+
+            # move back if not a leaf
+            if not self.cursor.is_leaf():
+                if self.cursor.is_root():
+                    return
+                self.cursor.not_select()
+                self.cursor = self.cursor.get_parent()
+                self.cursor.select()
+                return
+            
             if self.alpha:
-                key = self.cursor.alpha_key
-                if key is None:
-                    key = self.cursor.autocomplete
-                    if not self.pre_auto:
-                        self.user_input = (" ".join(self.user_input.split(" ")[:-1]) + " " + key).strip()
-                    else:
-                        self.user_input += " " + key
-                    # self.current_word = ""
-                    self.pre_auto = True
-                else:
-                    self.pre_auto = False
+                key = self.cursor.get_alpha_key()
+                # if key is None:
+                #     key = self.cursor.autocomplete
+                #     if not self.pre_auto:
+                #         self.user_input = (" ".join(self.user_input.split(" ")[:-1]) + " " + key).strip()
+                #     else:
+                #         self.user_input += " " + key
+                #     # self.current_word = ""
+                #     self.pre_auto = True
+                # else:
+                #     self.pre_auto = False
             else:
-                key = self.cursor.punc_key
+                key = self.cursor.get_punc_key()
                 self.pre_auto = False
 
             if len(key) == 1:
                 if not self.upper and key.isalpha():
-                    self.user_input += key.lower()
+                    self.input_box.append_text(key.lower())
                     self.current_word += key.lower()
                 else:
-                    self.user_input += key
+                    self.input_box.append_text(key)
                     self.current_word += key
                     if not self.alpha:
                         self.current_word = ""
             elif key == "Space":
-                self.user_input += " "
+                self.input_box.append_text(" ")
                 self.current_word = ""
-                print('reset')
             elif key == "Delete":
-                self.user_input = self.user_input[:-1]
+                self.input_box.delete_text()
                 self.current_word = self.current_word[:-1]
+            elif key == "Return":
+                self.input_box.new_line()
             elif key == "Clear":
-                self.user_input = ""
+                self.input_box.clear_text()
                 self.current_word = ""
             elif key == "U/L":
                 self.upper = not self.upper
             elif key == "123":
-                self.cursor = KEYS.root
+                self.cursor.not_select()
+                self.cursor = self.tree.get_root()
+                self.cursor.select()
                 self.alpha = False
             elif key == "abc":
                 self.upper = False
-                self.cursor = KEYS.root
+                self.cursor.not_select()
+                self.cursor = self.tree.get_root()
+                self.cursor.select()
                 self.alpha = True
 
-        if self.current_word != "":
-            self.autocomplete_words = AUTOCOMPLETE.search(word=self.current_word, max_cost=3, size=16)
+        # if self.current_word != "":
+        #     self.autocomplete_words = AUTOCOMPLETE.search(word=self.current_word, max_cost=3, size=16)
             # print(self.current_word, end=" ")
             # print(self.autocomplete_words)
 
@@ -287,9 +309,9 @@ class App:
         SCREEN.fill(WHITE)
 
         # draw the text input box
-        self.draw_text_input_box()
+        self.input_box.render(SCREEN, pygame)
 
-        self.draw_tree()
+        self.tree.render(SCREEN, self.alpha, self.upper, pygame)
 
         if FPS is not None:
             self.clock.tick(FPS)
@@ -298,33 +320,33 @@ class App:
         pygame.display.flip()
 
 
-    def draw_text_input_box(self):
-        input_bar = pygame.Rect((INPUT_WIDTH, INPUT_HEIGHT), (595, 70))
-        pygame.draw.rect(SCREEN, LIGHT_GREY, input_bar)
-        input = INPUT_FONT.render(self.user_input, True, DARK_GREY)
-        SCREEN.blit(input, (INPUT_WIDTH, INPUT_HEIGHT + 10))
+    # def draw_text_input_box(self):
+    #     input_bar = pygame.Rect((INPUT_WIDTH, INPUT_HEIGHT), (595, 70))
+    #     pygame.draw.rect(SCREEN, LIGHT_GREY, input_bar)
+    #     input = INPUT_FONT.render(self.user_input, True, DARK_GREY)
+    #     SCREEN.blit(input, (INPUT_WIDTH, INPUT_HEIGHT + 10))
+    
 
+    # def draw_tree(self):
+    #     i = j = 0
 
-    def draw_tree(self):
-        i = j = 0
+    #     while True:
+    #         tmp = KEYS.root
+    #         self.draw_tree_node(tmp, i, j)
 
-        while True:
-            tmp = KEYS.root
-            self.draw_tree_node(tmp, i, j)
+    #         j += 1
+    #         if i != NUM_LAYER-1:
+    #             if j >= len(LAYER_WIDTH[i]):
+    #                 i += 1
+    #                 j = 0
+    #         else:
+    #             if j >= len(LAYER_WIDTH[i]):
+    #                 return
 
-            j += 1
-            if i != NUM_LAYER-1:
-                if j >= len(LAYER_WIDTH[i]):
-                    i += 1
-                    j = 0
-            else:
-                if j >= len(LAYER_WIDTH[i]):
-                    return
+    #     # BFS thru the nodes and draw the rectangles with the key
+    #     fringe = [KEYS.root]
 
-        # BFS thru the nodes and draw the rectangles with the key
-        fringe = [KEYS.root]
-
-        i = j = 0  # i-height, j-width
+    #     i = j = 0  # i-height, j-width
 
         # Pop each word as we use it
         # Temp hack gives (a,b,c) -> (a,a,b,b,c,c)
@@ -346,23 +368,23 @@ class App:
         #             j = 0
 
 
-    def draw_tree_node(self, tmp, i, j):
-        if i == NUM_LAYER-1:
-            tmp.width = LAYER_WIDTH[i][j]
-            print(tmp.width)
-            if j % 2 == 0:
-                tmp.height = LAYER_HEIGHT[i][(j//2)%2]
-                print(tmp.height)
-            else:
-                tmp.height = LAYER_HEIGHT[i][((j-1)//2)%2]
-                print(tmp.height)
-        else:
-            tmp.width = LAYER_WIDTH[i][j]
-            tmp.height = LAYER_HEIGHT[i]
+    # def draw_tree_node(self, tmp, i, j):
+    #     if i == NUM_LAYER-1:
+    #         tmp.width = LAYER_WIDTH[i][j]
+    #         print(tmp.width)
+    #         if j % 2 == 0:
+    #             tmp.height = LAYER_HEIGHT[i][(j//2)%2]
+    #             print(tmp.height)
+    #         else:
+    #             tmp.height = LAYER_HEIGHT[i][((j-1)//2)%2]
+    #             print(tmp.height)
+    #     else:
+    #         tmp.width = LAYER_WIDTH[i][j]
+    #         tmp.height = LAYER_HEIGHT[i]
         
 
-        tmp.rect = pygame.Rect((tmp.width, tmp.height), (RECT_X, RECT_Y))
-        pygame.draw.rect(SCREEN, BLACK, tmp.rect, 1)
+    #     tmp.rect = pygame.Rect((tmp.width, tmp.height), (RECT_X, RECT_Y))
+    #     pygame.draw.rect(SCREEN, BLACK, tmp.rect, 1)
 
         # draw the rectangle
         # if not tmp.is_leaf():
@@ -440,8 +462,6 @@ class App:
             #     surface = KEY_FONT.render(str(tmp.punc_key), True, DARK_GREY)
             #     rect_surf.blit(surface, (15, 4))
             #     SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
-
-
 
 
 app = App()
