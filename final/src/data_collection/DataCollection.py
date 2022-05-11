@@ -88,6 +88,9 @@ class DataCollection:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     self.event_quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        self.event_quit()
 
             self.update()
             self.render()
@@ -150,10 +153,18 @@ class DataCollection:
         # draw the text input box
         draw_text(
             "Keep looking at the circle do what it says pls",
+            (WIDTH/2, 50),
+            40,
+            color = (150,150,150)
+        )
+
+        draw_text(
+            "Press Q to quit",
             (WIDTH/2, 100),
             40,
             color = (150,150,150)
         )
+
 
 
         for i,c in enumerate(DataCollection.ACTION_CHOICES):
