@@ -1,7 +1,7 @@
 import time
 
 class KeyLogger:
-    KEYLOG_PATH = "../../data/keylog.txt"
+    KEYLOG_PATH = "../data/keylog.txt"
 
     def __init__(self):
         self.file = open(KeyLogger.KEYLOG_PATH, "w")

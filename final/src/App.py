@@ -421,6 +421,3 @@ class App:
             #     rect_surf.blit(surface, (15, 4))
             #     SCREEN.blit(rect_surf, (tmp.width + 1, tmp.height + 1))
 
-
-app = App()
-app.start()

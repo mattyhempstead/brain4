@@ -6,23 +6,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import matplotlib
-from setting import FPS
-
-matplotlib.use('Qt5agg')
+from setting import *
 
 
 class Classify:
     def __init__(self):
     
-        new_model = tf.keras.models.load_model('./brainbox/models/model_1.h5')
-        new_model.summary()
-        self.new_model = new_model
+        self.model = tf.keras.models.load_model('./brainbox/models/model_1.h5')
+        self.model.summary()
+
         self.p_hist = [[], [], [], []]
         self.p_ehist = []
+
         self.fig = plt.figure(figsize=(15,5))
         self.fig_ehist = plt.figure(figsize=(15,5))
         self.ax= self.fig.add_subplot(1,1,1)
         self.ax_ehist= self.fig_ehist.add_subplot(1,1,1)
+
         plt.ion()
         self.fig.show()
         self.fig_ehist.show()
@@ -53,14 +53,14 @@ class Classify:
     def predict(self, data):
         #print(data)
         data = np.array([data])
-        p = self.new_model.predict(data)
+        p = self.model.predict(data)
         #print(p)
         p = tf.nn.softmax(p, axis=1)[0]
 
         for i in range(len(p)):
             self.p_hist[i].append(p[i])
             self.p_hist[i] = self.p_hist[i][-FPS*10:]
-        print(len(self.p_hist[0]))
+        # print(len(self.p_hist[0]))
     
         p_list = [f"{100*i:6.2f}" for i in list(np.array(p))]
 

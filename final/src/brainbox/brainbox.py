@@ -1,18 +1,19 @@
 from typing import List, Optional
-
-import time
-from xml.dom.minidom import getDOMImplementation
 from serial import Serial
 import numpy as np
 import pandas as pd
+import time
 import signal
 import random
+import matplotlib.pyplot as plt
 
 from brainbox.BrainboxStream import BrainboxStream
 from brainbox.Classify import Classify
 from brainbox.filters import spiker_filter, downsample
 
 from setting import *
+
+
 
 loop_time = time.time()
 event_time = time.time()
@@ -28,7 +29,6 @@ def brainbox_loop():
     loop_time = t
 
 
-
     data = brainbox_stream.read()
     if data is None:
         print("No amplitude data")
@@ -41,10 +41,14 @@ def brainbox_loop():
 
     # # Downsample
     data = downsample.mean(data, factor=100)
-    #print(len(data), data[:10])
+    print(len(data), data[:3])
 
     # Classify
     pred = classify.predict(data)
+
+    # print(pred, len(data))
+    # input()
+
 
     global event_time
 
@@ -53,8 +57,8 @@ def brainbox_loop():
     
     if pred != 0:
         event_time = time.time() + 1
+        print(pred, event_time)
 
-    print(pred, event_time)
     # Send signal to UI if needed
     if pred == 1:
         pygame.event.post(LEFT_EVENT)

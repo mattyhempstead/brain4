@@ -1,6 +1,8 @@
 from socket import timeout
 from typing import List, Optional
 
+from setting import *
+
 import time
 from xml.dom.minidom import getDOMImplementation
 from serial import Serial
@@ -10,6 +12,9 @@ import glob
 
 
 class BrainboxStream:
+
+    FAKE_ARDUINO = False
+
     def __init__(self):
         self.time = time.perf_counter()
 
@@ -28,24 +33,32 @@ class BrainboxStream:
         self.full_buffer_time = 3
         self.full_buffer_size = int(self.full_buffer_time * self.Fs)
         self.full_buffer = []
-        self.tempBuffer = []
+
+        # Buffer of all data
         self.temp_buffer_time = 60
         self.temp_buffer_size = int(self.temp_buffer_time * self.Fs)
+        self.tempBuffer = []
 
         self.serial:Serial = self.get_stream()
 
 
     def get_port(self) -> str:
+        if BrainboxStream.FAKE_ARDUINO:
+            return None
+
         # Check for serial name (MAC specific)
         if glob.glob('/dev/tty.usbserial*'):
             serialName = glob.glob('/dev/tty.usbserial*')
         elif glob.glob('/dev/tty.usbmodem*'):
             serialName = glob.glob('/dev/tty.usbmodem*')
         else:
-            print('SERIAL NOT DETECTED')
+            raise Exception('SERIAL NOT DETECTED')
         return serialName[0]
 
     def get_stream(self):
+        if BrainboxStream.FAKE_ARDUINO:
+            return None
+
         return Serial(
             port=self.port_num,
             baudrate=self.baudrate,
@@ -54,22 +67,24 @@ class BrainboxStream:
 
     def read_arduino(self):
         """ Read unprocessed data from spikerBox """
-        # print(self.serial.out_waiting, self.window_buffer_size)
-        # if self.serial.out_waiting < self.window_buffer_size:
-        #     return None
-        # raise Exception('success')
-
-
         data = self.serial.read(self.window_buffer_size)  # blocking
         out = np.array([int(i) for i in data])
         return out
 
     def read_amplitudes(self):
-        """ Convert spikerBox data to list of amplitude measurements """
+        """ Read amplitude measurements from spikerBox """
+        if BrainboxStream.FAKE_ARDUINO:
+            # Return a random stream
+            if np.random.random() < 0.05:
+                return None
+            else:
+                return np.random.normal(size=np.random.randint(1,2*self.Fs/FPS))
+
         raw_data = self.read_arduino()
         if raw_data is None:
             return None
 
+        # Convert spikerBox data to list of amplitude measurements
         amp_data = []
         i = 1
         while i < len(raw_data) - 1:
@@ -86,7 +101,7 @@ class BrainboxStream:
         """ Read next arduino stream input and return processed data if ready """
         amp_data = self.read_amplitudes()
         if amp_data is None:
-            print("Arduino buffer not full")
+            # print("Arduino buffer not full")
             return None
 
         #print(amp_data)
@@ -95,23 +110,23 @@ class BrainboxStream:
         self.full_buffer = np.append(self.full_buffer, amp_data)
         self.tempBuffer = np.append(self.tempBuffer, amp_data)
         #print(self.full_buffer)
+
         self.full_buffer = self.full_buffer[-self.full_buffer_size:]
-        self.tempBuffer = self.tempBuffer[-self.temp_buffer_size:]
-        print('Temp Buffer size: ', len(self.tempBuffer))
         #print(self.full_buffer_size, len(self.full_buffer))
+
+        self.tempBuffer = self.tempBuffer[-self.temp_buffer_size:]
+        # print('Temp Buffer size: ', len(self.tempBuffer))
+
         # Return None if not ready for full sequence
         if len(self.full_buffer) < self.full_buffer_size:
-            print("Building", len(self.full_buffer))
+            print("Building full_buffer", len(self.full_buffer))
             return None
 
         self.print_time()
-        
 
-        return   (self.full_buffer - self.tempBuffer.mean())/self.tempBuffer.std() 
+        return (self.full_buffer - self.tempBuffer.mean())/self.tempBuffer.std() 
 
     def print_time(self):
         t = time.perf_counter() - self.time
         self.time = time.perf_counter()
-        print(f"Read time: {t}")
-
-
+        print(f"Read time: {100*t:5.2f}ms")

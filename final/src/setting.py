@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Qt5agg')
+
 import pygame, os, signal
 from fast_autocomplete import AutoComplete
 
@@ -79,4 +82,5 @@ SCREEN = pygame.display.set_mode([WIDTH, HEIGHT])
 
 
 FPS = 10  # None for unlimited
+
 
