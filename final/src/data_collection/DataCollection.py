@@ -21,7 +21,10 @@ class DataCollection:
     # e.g. "Josh"
     PERSON = "Josh"
 
-    # Make sure you change this each time you move the electrodes
+    # The brainbox ID
+    BRAINBOX_NUMBER = 0
+
+    # Make sure you change this each time you move/restick the electrodes
     # e.g. 3
     ELECTRODE_PLACEMENT = 0
 
@@ -54,6 +57,7 @@ class DataCollection:
         self.key_logger = KeyLogger(
             person = DataCollection.PERSON,
             electrode_placement = DataCollection.ELECTRODE_PLACEMENT,
+            brainbox_number = DataCollection.BRAINBOX_NUMBER,
         )
 
         self.follow = Follow()
