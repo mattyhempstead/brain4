@@ -1,7 +1,28 @@
 import pygame
+from typing import Tuple
+
 from setting import *
 
+from text import draw_text
+
+
 class Node:
+    WIDTH = 40
+    HEIGHT = 45
+
+    BORDER_RADIUS = 10
+    BORDER_COLOR = BLACK
+
+    BACKGROUND_COLOR = WHITE
+    BACKGROUND_COLOR_LEAF = (247, 246, 220)
+    BACKGROUND_COLOR_SELECTED = (171,188,214)
+
+    EDGE_TEXT_FONT_SIZE = 22
+    EDGE_TEXT_CIRCLE_RADIUS = 10
+    EDGE_TEXT_CIRCLE_COLOR = (185, 222, 240)
+    EDGE_TEXT_CIRCLE_BORDER_COLOR = BLACK
+
+
     def __init__(self, layer:int, height:int, width:int, alpha_key=None, punc_key=None, root=False, leaf=False):
         self.left_child = None
         self.right_child = None
@@ -69,73 +90,127 @@ class Node:
     def set_parent(self, parent):
         self.parent = parent
 
-    def render(self, SCREEN, alpha, upper, p):
-        # draw the rectangle
-        rect = p.Rect((self.width, self.height), (NODE_LENGTH, NODE_LENGTH))
-        p.draw.rect(SCREEN, BLACK, rect, 1)
+    @property
+    def rect(self):
+        return pygame.Rect(
+            (self.width, self.height),
+            (Node.WIDTH, Node.HEIGHT),
+        )
 
-        # draw the lines connecting to children if not a leaf
-        if not self.is_leaf():
-            start = (self.width + NODE_LENGTH/2, self.height + NODE_LENGTH)
-            end_left = (self.left_child.width + NODE_LENGTH/2, self.left_child.height)
-            end_right = (self.right_child.width + NODE_LENGTH/2, self.right_child.height)
+    def render(self, alpha, upper):
+        self.render_rect()
+        self.render_edges()
+        self.render_text(alpha, upper)
 
-            p.draw.line(SCREEN, BLACK, start, end_left)
-            p.draw.line(SCREEN, BLACK, start, end_right)
 
-        # fill the node
-        rect_surf = p.Surface((NODE_LENGTH-2, NODE_LENGTH-2))
+    def render_rect(self):
+        # fill rect
+        fill_colour = Node.BACKGROUND_COLOR
+        if self.leaf:
+            fill_colour = Node.BACKGROUND_COLOR_LEAF
         if self.selected:
-            rect_surf.fill(LIGHT_GREY)
-        else:
-            rect_surf.fill(WHITE)
+            fill_colour = Node.BACKGROUND_COLOR_SELECTED
+        pygame.draw.rect(SCREEN, fill_colour, self.rect, 0, Node.BORDER_RADIUS)
+
+        # draw rect
+        pygame.draw.rect(SCREEN, Node.BORDER_COLOR, self.rect, 2, Node.BORDER_RADIUS)
+
+
+    def render_edges(self):
+        """ draw the lines connecting to children if not a leaf """
+        if self.is_leaf():
+            return
+
+        start = self.rect.midbottom
+        end_left = self.left_child.rect.midtop
+        end_right = self.right_child.rect.midtop
+
+        pygame.draw.line(SCREEN, BLACK, start, end_left)
+        pygame.draw.line(SCREEN, BLACK, start, end_right)
+
+
+        if self.selected: 
+            edge_left_midpoint = (
+                (start[0] + end_left[0]) / 2,
+                (start[1] + end_left[1]) / 2,
+            )
+            self.render_edge_text("L", edge_left_midpoint)
+
+            edge_right_midpoint = (
+                (start[0] + end_right[0]) / 2,
+                (start[1] + end_right[1]) / 2,
+            )
+            self.render_edge_text("R", edge_right_midpoint)
+
+            if self.parent is not None:
+                edge_parent_midpoint = (
+                    (self.rect.midtop[0] + self.parent.rect.midbottom[0]) / 2,
+                    (self.rect.midtop[1] + self.parent.rect.midbottom[1]) / 2,
+                )
+                self.render_edge_text("B", edge_parent_midpoint)
+
+
+    def render_edge_text(self, text:str, pos:Tuple[int,int]):
+        # Circle background
+        pygame.draw.circle(
+            SCREEN, 
+            Node.EDGE_TEXT_CIRCLE_COLOR,
+            pos, 
+            Node.EDGE_TEXT_CIRCLE_RADIUS
+        )
+
+        # Circle border
+        pygame.draw.circle(
+            SCREEN, 
+            Node.EDGE_TEXT_CIRCLE_BORDER_COLOR,
+            pos, 
+            Node.EDGE_TEXT_CIRCLE_RADIUS,
+            1
+        )
+
+        # Text
+        draw_text(
+            text = text,
+            pos = pos,
+            size = Node.EDGE_TEXT_FONT_SIZE,
+            color = DARK_GREY
+        )
+
+
+    def render_text(self, alpha, upper):
+        # fill the node with text
+        # construct transparent surface
+        rect_surf = pygame.Surface((Node.WIDTH-2, Node.HEIGHT-2), pygame.SRCALPHA, 32)
+        rect_surf = rect_surf.convert_alpha()
 
         if self.is_leaf():
             if alpha:
                 key = self.alpha_key
-                
-                if len(key) > 1:
-                    # options
-                    if key == "U/L":
-                        if upper:
-                            key = "Lower"
-                        else:
-                            key = "Upper"
-                    surface = p.font.Font(None, 15).render(key, True, DARK_GREY)
-                    if len(key) == 5:
-                        rect_surf.blit(surface, (1, 10))
-                    elif len(key) == 3:
-                        rect_surf.blit(surface, (8, 10))
+                if key == "U/L":
+                    if upper:
+                        key = "Lower"
                     else:
-                        rect_surf.blit(surface, (0, 10))
-
-                    SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))
-                
+                        key = "Upper"
                 else:
                     # alphabets
-                    if not upper:
+                    if not upper and len(key) == 1:
                         key = key.lower()
-
-                    surface = p.font.Font(None, 45).render(key, True, DARK_GREY)
-                    rect_surf.blit(surface, (8, 2))
-                    SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))
-            
             else:
-                if len(str(self.punc_key)) > 1:
-                    surface = p.font.Font(None, 15).render(self.punc_key, True, DARK_GREY)
+                key = self.punc_key
 
-                    if len(self.punc_key) == 5:
-                        rect_surf.blit(surface, (1, 10))
-                    elif len(self.punc_key) == 3:
-                        rect_surf.blit(surface, (8, 10))
-                    else:
-                        rect_surf.blit(surface, (0, 10))
+            if len(key) == 1:
+                font_size = 40
+            elif len(key) == 3:
+                font_size = 22
+            else:
+                font_size = 17
 
-                    SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))
-                else:
-                    surface = p.font.Font(None, 40).render(self.punc_key, True, DARK_GREY)
-                    rect_surf.blit(surface, (8, 2))
-                    SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))                
-        else:
-            SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))
-        
+            draw_text(
+                text = key,
+                pos = rect_surf.get_rect().center,
+                size = font_size,
+                color = DARK_GREY,
+                surface = rect_surf,
+            )
+
+        SCREEN.blit(rect_surf, (self.width + 1, self.height + 1))

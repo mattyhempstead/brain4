@@ -1,76 +1,20 @@
 # Import and initialize the pygame library
 import pygame, os, signal
+import csv
+
+from setting import *
 from Tree import Tree
 from InputBox import InputBox
-from setting import *
-from fast_autocomplete import AutoComplete
 
-from pygame.locals import (
-    K_LEFT,
-    K_RIGHT,
-    K_RETURN,
-    KEYDOWN,
-    QUIT,
-)
+from KeyLogger import KeyLogger
 
-# import words for autocomplete
-WORDS = {}
-""" 
-words_10000.txt: https://www.mit.edu/~ecprice/wordlist.10000
-words_10000_github.txt: https://github.com/first20hours/google-10000-english/blob/master/google-10000-english.txt
-"""
-file = open("words_10000.txt", "r")
-for word in file.read().split():
-    WORDS[word] = {}
-AUTOCOMPLETE = AutoComplete(words=WORDS)
-
-
-# init the game
-pygame.init()
-pygame.display.set_caption("Virtual Keyboard")
-
-# custom event
-LEFT = pygame.USEREVENT + 1
-RIGHT = pygame.USEREVENT + 2
-SELECT = pygame.USEREVENT + 3
-
-LEFT_EVENT = pygame.event.Event(LEFT)
-RIGHT_EVENT = pygame.event.Event(RIGHT)
-SELECT_EVENT = pygame.event.Event(SELECT)
-
-""" 
-----call the events----
- 1. Convert event to Pygame's event datatype
-
-LEFT_EVENT = pygame.event.Event(LEFT)
-RIGHT_EVENT = pygame.event.Event(RIGHT)
-SELECT_EVENT = pygame.event.Event(SELECT)
-
- 2. post the events to the end of the queue
-
-pygame.event.post(LEFT_EVENT)
-pygame.event.post(RIGHT_EVENT)
-pygame.event.post(SELECT_EVENT)
-"""
-
-# Set up the drawing window
-WIDTH, HEIGHT = 1455, 800
-RECT_X, RECT_Y = 35, 35
-SCREEN = pygame.display.set_mode([WIDTH, HEIGHT])
-
-def signal_handler(signum, stack):
-    print("sighandler " + str(signum))
-    if signum == 30:
-        pygame.event.post(LEFT_EVENT)
-    elif signum == 31:
-        pygame.event.post(RIGHT_EVENT)
-    elif signum == 28:
-        pygame.event.post(SELECT_EVENT)
-
-
-FPS = 30  # None for unlimited
+from brainbox.brainbox import brainbox_loop
 
 class App:
+    BACKGROUND_COLOR = LIGHT_GREY
+
+    KEYLOG_MODE = True
+
     def __init__(self):
         print(2, os.getpid())
 
@@ -89,15 +33,16 @@ class App:
         self.cursor.select()
         
         self.input_box = InputBox()
+        
+        self.key_logger = KeyLogger()
+
 
     def start(self):
         self.clock = pygame.time.Clock()
 
-        signal.signal(signal.SIGUSR1, signal_handler)
-        signal.signal(signal.SIGUSR2, signal_handler)
-        signal.signal(signal.SIGWINCH, signal_handler)
-
         while self.running:
+            
+            brainbox_loop()
 
             # event handler
             for event in pygame.event.get():
@@ -118,14 +63,24 @@ class App:
 
             self.render()
 
+            if FPS is not None:
+                self.clock.tick(FPS)
+
         # Done! Time to quit.
         pygame.quit()
+
+        self.key_logger.close()
 
 
     def event_quit(self):
         self.running = False
 
     def event_left(self):
+        if App.KEYLOG_MODE:
+            self.key_logger.write("L")
+            return
+
+
         # if not self.alpha and self.cursor.left.is_leaf():
         #     self.cursor = KEYS.root
         # elif self.cursor.is_leaf() or self.cursor.left.autocomplete == "":
@@ -141,6 +96,10 @@ class App:
         
 
     def event_right(self):
+        if App.KEYLOG_MODE:
+            self.key_logger.write("R")
+            return
+
         # if not self.alpha and self.cursor.right.is_leaf():
         #     self.cursor = KEYS.root
         # elif self.cursor.is_leaf() or self.cursor.right.autocomplete == "":
@@ -156,6 +115,10 @@ class App:
 
 
     def event_select(self):
+        if App.KEYLOG_MODE:
+            self.key_logger.write("S")
+            return
+
         key = ""
 
         # move back if not a leaf
@@ -210,7 +173,7 @@ class App:
             self.cursor = KEYS.root
             self.cursor.select()
             self.alpha = False
-        elif key == "abc":
+        elif key == "ABC":
             self.upper = False
             self.cursor.not_select()
             self.cursor = KEYS.root
@@ -286,16 +249,14 @@ class App:
             elif key == "U/L":
                 self.upper = not self.upper
             elif key == "123":
-                self.cursor.not_select()
-                self.cursor = self.tree.get_root()
-                self.cursor.select()
                 self.alpha = False
-            elif key == "abc":
+            elif key == "ABC":
                 self.upper = False
-                self.cursor.not_select()
-                self.cursor = self.tree.get_root()
-                self.cursor.select()
                 self.alpha = True
+                
+            self.cursor.not_select()
+            self.cursor = self.tree.get_root()
+            self.cursor.select()
 
         # if self.current_word != "":
         #     self.autocomplete_words = AUTOCOMPLETE.search(word=self.current_word, max_cost=3, size=16)
@@ -306,15 +267,12 @@ class App:
     def render(self):
 
         # fill the background with white
-        SCREEN.fill(WHITE)
+        SCREEN.fill(App.BACKGROUND_COLOR)
 
         # draw the text input box
-        self.input_box.render(SCREEN, pygame)
+        self.input_box.render()
 
-        self.tree.render(SCREEN, self.alpha, self.upper, pygame)
-
-        if FPS is not None:
-            self.clock.tick(FPS)
+        self.tree.render(self.alpha, self.upper)
 
         # Flip the display
         pygame.display.flip()

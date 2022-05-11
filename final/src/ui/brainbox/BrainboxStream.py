@@ -1,3 +1,4 @@
+from socket import timeout
 from typing import List, Optional
 
 import time
@@ -7,6 +8,7 @@ import numpy as np
 import pandas as pd
 import glob
 
+
 class BrainboxStream:
     def __init__(self):
         self.time = time.perf_counter()
@@ -15,15 +17,7 @@ class BrainboxStream:
         self.Fs = 10000.0
         
         self.baudrate = 230400
-
-        # Check for serial name (MAC specific)
-        if glob.glob('/dev/tty.usbserial*'):
-            serialName = glob.glob('/dev/tty.usbserial*')
-        elif glob.glob('/dev/tty.usbmodem*'):
-            serialName = glob.glob('/dev/tty.usbmodem*')
-        else:
-            print('SERIAL NOT DETECTED')
-        self.port_num = serialName[0]
+        self.port_num = self.get_port()
 
         # Buffer to read from brainbox
         self.window_buffer_time = 0.2
@@ -37,15 +31,32 @@ class BrainboxStream:
 
         self.serial:Serial = self.get_stream()
 
+
+    def get_port(self) -> str:
+        # Check for serial name (MAC specific)
+        if glob.glob('/dev/tty.usbserial*'):
+            serialName = glob.glob('/dev/tty.usbserial*')
+        elif glob.glob('/dev/tty.usbmodem*'):
+            serialName = glob.glob('/dev/tty.usbmodem*')
+        else:
+            print('SERIAL NOT DETECTED')
+        return serialName[0]
+
     def get_stream(self):
         return Serial(
             port=self.port_num,
             baudrate=self.baudrate,
-            timeout = self.window_buffer_size,
+            timeout = 0,
         )
 
     def read_arduino(self):
         """ Read unprocessed data from spikerBox """
+        # print(self.serial.out_waiting, self.window_buffer_size)
+        # if self.serial.out_waiting < self.window_buffer_size:
+        #     return None
+        # raise Exception('success')
+
+
         data = self.serial.read(self.window_buffer_size)  # blocking
         out = np.array([int(i) for i in data])
         return out
@@ -53,6 +64,9 @@ class BrainboxStream:
     def read_amplitudes(self):
         """ Convert spikerBox data to list of amplitude measurements """
         raw_data = self.read_arduino()
+        if raw_data is None:
+            return None
+
         amp_data = []
         i = 1
         while i < len(raw_data) - 1:
@@ -62,11 +76,16 @@ class BrainboxStream:
                 intOut += raw_data[i]
                 amp_data = np.append(amp_data, intOut)
             i += 1
+        #print('Raw Data: ', len(raw_data), 'Amp Data: ', len(amp_data))
         return amp_data
 
     def read(self) -> Optional[np.array]:
         """ Read next arduino stream input and return processed data if ready """
         amp_data = self.read_amplitudes()
+        if amp_data is None:
+            print("Arduino buffer not full")
+            return None
+
         #print(amp_data)
 
         # Add to full_buffer and limit max length
@@ -77,7 +96,7 @@ class BrainboxStream:
         # Return None if not ready for full sequence
         if len(self.full_buffer) < self.full_buffer_size:
             print("Building", len(self.full_buffer))
-            return
+            return None
 
         self.print_time()
         return self.full_buffer

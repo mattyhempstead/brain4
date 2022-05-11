@@ -6,7 +6,7 @@ class Tree:
     def __init__(self):
         self.root = None
         self.alpha_keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Space', '123', 'U/L', 'Delete', 'Clear', 'Return']
-        self.punc_keys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', ':', ';', '/', '?', '!', '\'', '\"', '@', '&', '-', '_', '(', ')', '[', ']', 'Space', 'abc', 'Delete', 'Clear', 'Return']
+        self.punc_keys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', ':', ';', '/', '?', '!', '\'', '\"', '@', '&', '-', '_', '(', ')', '[', ']', 'Space', 'ABC', 'Delete', 'Clear', 'Return']
     
     def get_root(self):
         return self.root
@@ -53,12 +53,12 @@ class Tree:
                 cur.set_right(new)
                 tmp.pop(0)
 
-    def render(self, SCREEN, alpha, upper, p):
+    def render(self, alpha, upper):
         fringe = [self.root]
 
         while len(fringe) > 0:
             tmp = fringe.pop(0)
-            tmp.render(SCREEN, alpha, upper, p)
+            tmp.render(alpha, upper)
 
             if not tmp.is_leaf():
                 fringe.append(tmp.get_left())
@@ -75,7 +75,3 @@ class Tree:
             if not tmp.is_leaf():
                 fringe.append(tmp.left_child)
                 fringe.append(tmp.right_child)
-
-        
-            
-
