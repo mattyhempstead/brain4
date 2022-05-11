@@ -15,7 +15,7 @@ from brainbox.filters import spiker_filter, downsample
 from setting import *
 
 loop_time = time.time()
-
+event_time = time.time()
 
 brainbox_stream = BrainboxStream()
 classify = Classify()
@@ -45,7 +45,16 @@ def brainbox_loop():
 
     # Classify
     pred = classify.predict(data)
-    print(pred)
+
+    global event_time
+
+    if time.time() < event_time:
+        pred = 0
+    
+    if pred != 0:
+        event_time = time.time() + 1
+
+    print(pred, event_time)
     # Send signal to UI if needed
     if pred == 1:
         pygame.event.post(LEFT_EVENT)
