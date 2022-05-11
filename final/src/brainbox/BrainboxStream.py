@@ -13,7 +13,7 @@ import glob
 
 class BrainboxStream:
 
-    FAKE_ARDUINO = False
+    FAKE_ARDUINO = True
 
     def __init__(self):
         self.time = time.perf_counter()

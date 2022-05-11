@@ -6,8 +6,6 @@ from setting import *
 from Tree import Tree
 from InputBox import InputBox
 
-from KeyLogger import KeyLogger
-
 from brainbox.brainbox import brainbox_loop
 
 class App:
@@ -34,7 +32,7 @@ class App:
         
         self.input_box = InputBox()
         
-        self.key_logger = KeyLogger()
+        # self.key_logger = KeyLogger()
 
 
     def start(self):
@@ -69,7 +67,7 @@ class App:
         # Done! Time to quit.
         pygame.quit()
 
-        self.key_logger.close()
+        # self.key_logger.close()
 
 
     def event_quit(self):
@@ -77,7 +75,7 @@ class App:
 
     def event_left(self):
         if App.KEYLOG_MODE:
-            self.key_logger.write("L")
+            # self.key_logger.write("L")
             return
 
 
@@ -97,7 +95,7 @@ class App:
 
     def event_right(self):
         if App.KEYLOG_MODE:
-            self.key_logger.write("R")
+            # self.key_logger.write("R")
             return
 
         # if not self.alpha and self.cursor.right.is_leaf():
@@ -116,7 +114,7 @@ class App:
 
     def event_select(self):
         if App.KEYLOG_MODE:
-            self.key_logger.write("S")
+            # self.key_logger.write("S")
             return
 
         key = ""

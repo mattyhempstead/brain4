@@ -31,6 +31,8 @@ def draw_text(text:str, pos:Tuple[int,int], size:int, color=BLACK, center=True, 
     text_rect = text.get_rect()
     if center:
         text_rect.center = pos
+    else:
+        text_rect.topleft = pos
 
     surface.blit(text, text_rect)
 

@@ -10,6 +10,8 @@ from setting import *
 
 
 class Classify:
+    PLOT_PREDICTIONS = False
+
     def __init__(self):
     
         self.model = tf.keras.models.load_model('./brainbox/models/model_1.h5')
@@ -18,18 +20,19 @@ class Classify:
         self.p_hist = [[], [], [], []]
         self.p_ehist = []
 
-        self.fig = plt.figure(figsize=(15,5))
-        self.fig_ehist = plt.figure(figsize=(15,5))
-        self.ax= self.fig.add_subplot(1,1,1)
-        self.ax_ehist= self.fig_ehist.add_subplot(1,1,1)
-
-        plt.ion()
-        self.fig.show()
-        self.fig_ehist.show()
-        self.fig.canvas.draw_idle()
-        self.fig_ehist.canvas.draw_idle()
-        plt.xlabel('time (s)')
         self.counter = 0
+        if Classify.PLOT_PREDICTIONS:
+            self.fig = plt.figure(figsize=(15,5))
+            self.fig_ehist = plt.figure(figsize=(15,5))
+            self.ax= self.fig.add_subplot(1,1,1)
+            self.ax_ehist= self.fig_ehist.add_subplot(1,1,1)
+
+            plt.ion()
+            self.fig.show()
+            self.fig_ehist.show()
+            self.fig.canvas.draw_idle()
+            self.fig_ehist.canvas.draw_idle()
+            plt.xlabel('time (s)')
 
     def plot_phist(self):
         self.counter += 1
@@ -64,9 +67,10 @@ class Classify:
     
         p_list = [f"{100*i:6.2f}" for i in list(np.array(p))]
 
-        self.plot_phist()
-        self.plot_ehist()
-        
+        if Classify.PLOT_PREDICTIONS:
+            self.plot_phist()
+            self.plot_ehist()
+
             #self.fig.canvas.draw_idle()  
             #plt.draw()
             #plt.pause(0.001)
