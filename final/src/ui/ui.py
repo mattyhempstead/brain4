@@ -1,11 +1,19 @@
 # Import and initialize the pygame library
 import pygame, os, signal
+import csv
+
+from setting import *
 from Tree import Tree
 from InputBox import InputBox
-from setting import *
+
+from KeyLogger import KeyLogger
+
+from brainbox.brainbox import brainbox_loop
 
 class App:
     BACKGROUND_COLOR = LIGHT_GREY
+
+    KEYLOG_MODE = True
 
     def __init__(self):
         print(2, os.getpid())
@@ -25,15 +33,16 @@ class App:
         self.cursor.select()
         
         self.input_box = InputBox()
+        
+        self.key_logger = KeyLogger()
+
 
     def start(self):
         self.clock = pygame.time.Clock()
 
-        signal.signal(signal.SIGUSR1, signal_handler)
-        signal.signal(signal.SIGUSR2, signal_handler)
-        signal.signal(signal.SIGWINCH, signal_handler)
-
         while self.running:
+            
+            brainbox_loop()
 
             # event handler
             for event in pygame.event.get():
@@ -54,14 +63,24 @@ class App:
 
             self.render()
 
+            if FPS is not None:
+                self.clock.tick(FPS)
+
         # Done! Time to quit.
         pygame.quit()
+
+        self.key_logger.close()
 
 
     def event_quit(self):
         self.running = False
 
     def event_left(self):
+        if App.KEYLOG_MODE:
+            self.key_logger.write("L")
+            return
+
+
         # if not self.alpha and self.cursor.left.is_leaf():
         #     self.cursor = KEYS.root
         # elif self.cursor.is_leaf() or self.cursor.left.autocomplete == "":
@@ -77,6 +96,10 @@ class App:
         
 
     def event_right(self):
+        if App.KEYLOG_MODE:
+            self.key_logger.write("R")
+            return
+
         # if not self.alpha and self.cursor.right.is_leaf():
         #     self.cursor = KEYS.root
         # elif self.cursor.is_leaf() or self.cursor.right.autocomplete == "":
@@ -92,6 +115,10 @@ class App:
 
 
     def event_select(self):
+        if App.KEYLOG_MODE:
+            self.key_logger.write("S")
+            return
+
         key = ""
 
         # move back if not a leaf
@@ -246,9 +273,6 @@ class App:
         self.input_box.render()
 
         self.tree.render(self.alpha, self.upper)
-
-        if FPS is not None:
-            self.clock.tick(FPS)
 
         # Flip the display
         pygame.display.flip()

@@ -77,15 +77,6 @@ WIDTH, HEIGHT = 1455, 800
 RECT_X, RECT_Y = 35, 35
 SCREEN = pygame.display.set_mode([WIDTH, HEIGHT])
 
-def signal_handler(signum, stack):
-    print("sighandler " + str(signum))
-    if signum == 30:
-        pygame.event.post(LEFT_EVENT)
-    elif signum == 31:
-        pygame.event.post(RIGHT_EVENT)
-    elif signum == 28:
-        pygame.event.post(SELECT_EVENT)
-
 
 FPS = 30  # None for unlimited
 
