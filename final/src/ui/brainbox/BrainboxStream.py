@@ -28,6 +28,9 @@ class BrainboxStream:
         self.full_buffer_time = 3
         self.full_buffer_size = int(self.full_buffer_time * self.Fs)
         self.full_buffer = []
+        self.tempBuffer = []
+        self.temp_buffer_time = 60
+        self.temp_buffer_size = int(self.temp_buffer_time * self.Fs)
 
         self.serial:Serial = self.get_stream()
 
@@ -90,8 +93,11 @@ class BrainboxStream:
 
         # Add to full_buffer and limit max length
         self.full_buffer = np.append(self.full_buffer, amp_data)
+        self.tempBuffer = np.append(self.tempBuffer, amp_data)
         #print(self.full_buffer)
         self.full_buffer = self.full_buffer[-self.full_buffer_size:]
+        self.tempBuffer = self.tempBuffer[-self.temp_buffer_size:]
+        print('Temp Buffer size: ', len(self.tempBuffer))
         #print(self.full_buffer_size, len(self.full_buffer))
         # Return None if not ready for full sequence
         if len(self.full_buffer) < self.full_buffer_size:
@@ -99,7 +105,9 @@ class BrainboxStream:
             return None
 
         self.print_time()
-        return self.full_buffer
+        
+
+        return   (self.full_buffer - self.tempBuffer.mean())/self.tempBuffer.std() 
 
     def print_time(self):
         t = time.perf_counter() - self.time

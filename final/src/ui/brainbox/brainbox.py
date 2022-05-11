@@ -45,7 +45,12 @@ def brainbox_loop():
 
     # Classify
     classify.predict(data)
+
+    # Plot Live
     
+
+
+
     # # Send signal to UI if needed
     # if random.random() < 0.05:
     #     pygame.event.post(LEFT_EVENT)
