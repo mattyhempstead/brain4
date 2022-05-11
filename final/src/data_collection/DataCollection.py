@@ -28,6 +28,10 @@ class DataCollection:
     # e.g. 3
     ELECTRODE_PLACEMENT = 0
 
+    # The time the data collection recording started
+    # This lets us match up the wave and event files
+    START_TIME = int(time.time())
+
 
 
 
@@ -58,6 +62,7 @@ class DataCollection:
             person = DataCollection.PERSON,
             electrode_placement = DataCollection.ELECTRODE_PLACEMENT,
             brainbox_number = DataCollection.BRAINBOX_NUMBER,
+            start_time = DataCollection.START_TIME,
         )
 
         self.follow = Follow()

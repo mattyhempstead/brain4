@@ -5,10 +5,17 @@ import os
 class KeyLogger:
     KEYLOG_PATH = "./data_collection/data/"
 
-    def __init__(self, person:str, electrode_placement:int, brainbox_number:int):
+    def __init__(
+        self,
+        person:str,
+        electrode_placement:int,
+        brainbox_number:int,
+        start_time:int,
+    ):
         self.person = person
         self.electrode_placement = electrode_placement
         self.brainbox_number = brainbox_number
+        self.start_time = start_time
 
 
         os.makedirs(KeyLogger.KEYLOG_PATH, exist_ok=True)
@@ -22,7 +29,7 @@ class KeyLogger:
         bn = str(self.brainbox_number)
 
         d = str(datetime.datetime.now())[:10]
-        t = int(time.time())
+        t = self.start_time
 
         return f"KEYLOG_{d}_{p}_{bn}_{ep}_{t}.csv"
 
