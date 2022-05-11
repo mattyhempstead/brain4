@@ -13,7 +13,7 @@ from brainbox.brainbox import brainbox_loop
 class App:
     BACKGROUND_COLOR = LIGHT_GREY
 
-    KEYLOG_MODE = True
+    KEYLOG_MODE = False
 
     def __init__(self):
         print(2, os.getpid())

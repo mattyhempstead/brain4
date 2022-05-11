@@ -78,5 +78,5 @@ RECT_X, RECT_Y = 35, 35
 SCREEN = pygame.display.set_mode([WIDTH, HEIGHT])
 
 
-FPS = 30  # None for unlimited
+FPS = 10  # None for unlimited
 
