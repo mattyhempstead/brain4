@@ -56,6 +56,7 @@ class DataCollection:
 
 
     def __init__(self):
+        self.start_time = time.time()
         self.running = True
 
         self.key_logger = KeyLogger(
@@ -175,7 +176,7 @@ class DataCollection:
         )
 
 
-
+        # Draw action counts
         for i,c in enumerate(DataCollection.ACTION_CHOICES):
             ac = self.action_counter[c]
             an = DataCollection.ACTION_NAME_MAP[c]
@@ -186,14 +187,24 @@ class DataCollection:
                 color = (150,150,150),
                 center = False,
             )
+
+        # Sample counter
         draw_text(
             f"Sample: {self.sample_counter}",
             (20, 200),
             40,
             color = (150,150,150),
             center = False,
-            )
+        )
 
+        # Time
+        draw_text(
+            f"Recording time: {time.time() - self.start_time:.2f}s",
+            (20, 250),
+            40,
+            color = (150,150,150),
+            center = False,
+        )
 
         # Add action countdown
         self.follow.set_action(self.action_name)
