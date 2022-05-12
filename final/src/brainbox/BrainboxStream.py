@@ -9,11 +9,14 @@ from serial import Serial
 import numpy as np
 import pandas as pd
 import glob
+import serial
+
+# Check for polarity upon launching - left = trough followed by peak and vice versa for right
 
 
 class BrainboxStream:
 
-    FAKE_ARDUINO = True
+    FAKE_ARDUINO = False
 
     def __init__(self):
         self.time = time.perf_counter()
@@ -63,6 +66,7 @@ class BrainboxStream:
             port=self.port_num,
             baudrate=self.baudrate,
             timeout = 0,
+            #parity= serial.PARITY_NONE
         )
 
     def read_arduino(self):

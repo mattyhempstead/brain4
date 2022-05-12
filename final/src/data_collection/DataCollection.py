@@ -4,12 +4,12 @@ import pygame, os, signal
 import csv
 import time
 import numpy as np
+from brainbox.BrainboxStream import BrainboxStream
 
 from setting import *
 
 from text import draw_text
 
-from brainbox.brainbox import brainbox_loop
 
 from .Follow import Follow
 from .KeyLogger import KeyLogger
@@ -65,6 +65,8 @@ class DataCollection:
             start_time = DataCollection.START_TIME,
         )
 
+        self.brainbox_stream = BrainboxStream()
+
         self.follow = Follow()
 
 
@@ -72,6 +74,7 @@ class DataCollection:
         self.action = None
 
         self.action_counter = {i:0 for i in DataCollection.ACTION_CHOICES}
+        self.sample_counter = 0
 
 
     def start(self):
@@ -83,6 +86,12 @@ class DataCollection:
         while self.running:
             
             # brainbox_loop()
+            # Get brainBox amplitude data (before downsampling)
+            # Write to csv 
+            data = self.brainbox_stream.read_amplitudes()
+            if data is not None:
+                self.key_logger.write_sample(data, self.brainbox_stream.Fs)
+                self.sample_counter += len(data)
 
             # event handler
             for event in pygame.event.get():
@@ -176,6 +185,13 @@ class DataCollection:
                 40,
                 color = (150,150,150),
                 center = False,
+            )
+        draw_text(
+            f"Sample: {self.sample_counter}",
+            (20, 200),
+            40,
+            color = (150,150,150),
+            center = False,
             )
 
 
