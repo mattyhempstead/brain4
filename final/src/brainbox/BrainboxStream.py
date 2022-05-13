@@ -33,7 +33,7 @@ class BrainboxStream:
         self.window_buffer = []
 
         # Total buffer maintained over time
-        self.full_buffer_time = 3
+        self.full_buffer_time = 2
         self.full_buffer_size = int(self.full_buffer_time * self.Fs)
         self.full_buffer = []
 

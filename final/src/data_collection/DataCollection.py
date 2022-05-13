@@ -26,7 +26,7 @@ class DataCollection:
 
     # Make sure you change this each time you move/restick the electrodes
     # e.g. 3
-    ELECTRODE_PLACEMENT = 2
+    ELECTRODE_PLACEMENT = 8
 
     # The time the data collection recording started
     # This lets us match up the wave and event files
