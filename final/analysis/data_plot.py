@@ -59,7 +59,7 @@ def plot_samples_events_individual(
     events_df_ind = events_df[events_df["event_id"] == event_id]
     num = len(events_df_ind)
 
-    plt.figure(figsize=(14, 3), dpi=80)
+    plt.figure(figsize=(14, 2), dpi=80)
 
     i = 0
     for idx,row in events_df_ind.iterrows():
@@ -70,7 +70,7 @@ def plot_samples_events_individual(
         samples_df_int = samples_df[sample_idx:sample_idx+event_sample_count]
 
         if i%3 == 0:
-            plt.figure(figsize=(14, 3), dpi=80)
+            plt.figure(figsize=(14, 2), dpi=80)
 
         plt.subplot(1, 3, 1+i%3)
         plt.title(f"Event {i+1}/{num} id={event_id} @ t={row['time_sec']}")

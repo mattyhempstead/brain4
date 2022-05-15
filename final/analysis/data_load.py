@@ -29,7 +29,10 @@ def downsample(sample_df, n=100):
         "sample": np.mean(np.array(sample_df["sample"]).reshape(-1,n), 1),
     })
 
-
+def downsample_arr(arr, n=100):
+    # Crop size to allow downsampling
+    arr = arr[:len(arr) - (len(arr)%n)]
+    return np.mean(arr.reshape(-1,n), 1)
 
 def load_event_data(file_path:str, event_id_map:dict, event_color_map:dict):
     """ Reads brainbox event data into a data frame """
@@ -37,7 +40,7 @@ def load_event_data(file_path:str, event_id_map:dict, event_color_map:dict):
     events_df = pd.read_csv(
         f"{file_path}.csv",
         names=["time_sec", "event_letter", "event_name"],
-        header=1,
+        header=0,
     )
 
     # # Filter away all events not in event_type_map

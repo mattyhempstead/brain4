@@ -50,7 +50,7 @@ def get_ml_data(
             event_id_map = event_id_map,
             event_color_map = event_color_map,
         )
-        print("Loaded {len(events_df)} events")
+        print(f"Loaded {len(events_df)} events")
         
 
         print(f"Merging samples and events")
