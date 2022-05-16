@@ -19,7 +19,7 @@ class DataCollection:
 
     # The person being recorded
     # e.g. "Josh"
-    PERSON = "Alex"
+    PERSON = "Marcus"
 
     # The brainbox ID
     BRAINBOX_NUMBER = '0005'
