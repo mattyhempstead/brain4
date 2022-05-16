@@ -14,7 +14,7 @@ class Classify:
 
     def __init__(self):
     
-        self.model = tf.keras.models.load_model('./brainbox/models/model_2_NoneReduce75.h5')
+        self.model = tf.keras.models.load_model('./brainbox/models/model_3_NoneReduce100.h5')
         self.model.summary()
 
         self.p_hist = [[], [], [], []]
