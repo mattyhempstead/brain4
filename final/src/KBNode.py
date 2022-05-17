@@ -6,7 +6,7 @@ from setting import *
 from text import draw_text
 
 
-class Node:
+class KBNode:
     WIDTH = 40
     HEIGHT = 45
 
@@ -94,7 +94,7 @@ class Node:
     def rect(self):
         return pygame.Rect(
             (self.width, self.height),
-            (Node.WIDTH, Node.HEIGHT),
+            (KBNode.WIDTH, KBNode.HEIGHT),
         )
 
     def render(self, alpha, upper):
@@ -105,15 +105,15 @@ class Node:
 
     def render_rect(self):
         # fill rect
-        fill_colour = Node.BACKGROUND_COLOR
+        fill_colour = KBNode.BACKGROUND_COLOR
         if self.leaf:
-            fill_colour = Node.BACKGROUND_COLOR_LEAF
+            fill_colour = KBNode.BACKGROUND_COLOR_LEAF
         if self.selected:
-            fill_colour = Node.BACKGROUND_COLOR_SELECTED
-        pygame.draw.rect(SCREEN, fill_colour, self.rect, 0, Node.BORDER_RADIUS)
+            fill_colour = KBNode.BACKGROUND_COLOR_SELECTED
+        pygame.draw.rect(SCREEN, fill_colour, self.rect, 0, KBNode.BORDER_RADIUS)
 
         # draw rect
-        pygame.draw.rect(SCREEN, Node.BORDER_COLOR, self.rect, 2, Node.BORDER_RADIUS)
+        pygame.draw.rect(SCREEN, KBNode.BORDER_COLOR, self.rect, 2, KBNode.BORDER_RADIUS)
 
 
     def render_edges(self):
@@ -154,17 +154,17 @@ class Node:
         # Circle background
         pygame.draw.circle(
             SCREEN, 
-            Node.EDGE_TEXT_CIRCLE_COLOR,
+            KBNode.EDGE_TEXT_CIRCLE_COLOR,
             pos, 
-            Node.EDGE_TEXT_CIRCLE_RADIUS
+            KBNode.EDGE_TEXT_CIRCLE_RADIUS
         )
 
         # Circle border
         pygame.draw.circle(
             SCREEN, 
-            Node.EDGE_TEXT_CIRCLE_BORDER_COLOR,
+            KBNode.EDGE_TEXT_CIRCLE_BORDER_COLOR,
             pos, 
-            Node.EDGE_TEXT_CIRCLE_RADIUS,
+            KBNode.EDGE_TEXT_CIRCLE_RADIUS,
             1
         )
 
@@ -172,7 +172,7 @@ class Node:
         draw_text(
             text = text,
             pos = pos,
-            size = Node.EDGE_TEXT_FONT_SIZE,
+            size = KBNode.EDGE_TEXT_FONT_SIZE,
             color = DARK_GREY
         )
 
@@ -180,7 +180,7 @@ class Node:
     def render_text(self, alpha, upper):
         # fill the node with text
         # construct transparent surface
-        rect_surf = pygame.Surface((Node.WIDTH-2, Node.HEIGHT-2), pygame.SRCALPHA, 32)
+        rect_surf = pygame.Surface((KBNode.WIDTH-2, KBNode.HEIGHT-2), pygame.SRCALPHA, 32)
         rect_surf = rect_surf.convert_alpha()
 
         if self.is_leaf():

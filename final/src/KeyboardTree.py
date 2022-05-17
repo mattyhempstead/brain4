@@ -1,12 +1,12 @@
 import pygame, math
-from Node import Node
+from KBNode import KBNode
 from setting import *
 
-class Tree:
+class KeyboardTree:
     def __init__(self):
         self.root = None
-        self.alpha_keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Space', '123', 'U/L', 'Delete', 'Clear', 'Return']
-        self.punc_keys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', ':', ';', '/', '?', '!', '\'', '\"', '@', '&', '-', '_', '(', ')', '[', ']', 'Space', 'ABC', 'Delete', 'Clear', 'Return']
+        self.alpha_keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Space', 'Tab', 'Delete', 'Clear', 'Return', '']
+        self.punc_keys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', ':', ';', '/', '?', '!', '\'', '\"', '@', '&', '-', '_', '(', ')', '[', ']', 'Space', 'Tab', 'Delete', 'Clear', 'Return']
     
     def get_root(self):
         return self.root
@@ -15,7 +15,7 @@ class Tree:
         key_cursor = 0
         width_cursor = 0
 
-        self.root = Node(1, LAYER_HEIGHT[0], LAYER_WIDTH[0][0], root=True)
+        self.root = KBNode(1, LAYER_HEIGHT[0], LAYER_WIDTH[0][0], root=True)
 
         tmp = [self.root]
         while len(tmp) > 0:
@@ -39,10 +39,10 @@ class Tree:
                 width_cursor += 1
 
             if cur.get_layer() == TREE_LAYER-1:
-                new = Node(TREE_LAYER, height, width, alpha_key=self.alpha_keys[key_cursor], punc_key=self.punc_keys[key_cursor], leaf=True)
+                new = KBNode(TREE_LAYER, height, width, alpha_key=self.alpha_keys[key_cursor], punc_key=self.punc_keys[key_cursor], leaf=True)
                 key_cursor += 1
             else:
-                new = Node(cur.get_layer()+1, height, width)
+                new = KBNode(cur.get_layer()+1, height, width)
                 tmp.append(new)
             
             # set parent and children

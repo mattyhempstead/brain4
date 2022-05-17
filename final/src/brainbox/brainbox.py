@@ -22,6 +22,7 @@ brainbox_stream = BrainboxStream()
 classify = Classify()
 
 def brainbox_loop():
+    print('Test')
     global loop_time
 
     t = time.time()

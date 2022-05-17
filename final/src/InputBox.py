@@ -32,7 +32,10 @@ class InputBox:
 
     def set_text(self, text:str):
         """ Sets entire user text """
-        self.user_input = text
+        self.user_input[-1] = text
+
+    def get_user_input(self):
+        return self.user_input
 
     def append_text(self, text:str):
         self.user_input[len(self.user_input)-1] += text
