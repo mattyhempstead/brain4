@@ -16,6 +16,8 @@ from .KeyLogger import KeyLogger
 
 
 class DataCollection:
+    DEMO_MODE = True
+
 
     # The person being recorded
     # e.g. "Josh"
@@ -59,14 +61,16 @@ class DataCollection:
         self.start_time = time.time()
         self.running = True
 
-        self.key_logger = KeyLogger(
-            person = DataCollection.PERSON,
-            electrode_placement = DataCollection.ELECTRODE_PLACEMENT,
-            brainbox_number = DataCollection.BRAINBOX_NUMBER,
-            start_time = DataCollection.START_TIME,
-        )
+        if not DataCollection.DEMO_MODE:
+            self.key_logger = KeyLogger(
+                person = DataCollection.PERSON,
+                electrode_placement = DataCollection.ELECTRODE_PLACEMENT,
+                brainbox_number = DataCollection.BRAINBOX_NUMBER,
+                start_time = DataCollection.START_TIME,
+            )
 
-        self.brainbox_stream = BrainboxStream()
+        if not DataCollection.DEMO_MODE:
+            self.brainbox_stream = BrainboxStream()
 
         self.follow = Follow()
 
@@ -89,10 +93,13 @@ class DataCollection:
             # brainbox_loop()
             # Get brainBox amplitude data (before downsampling)
             # Write to csv 
-            data = self.brainbox_stream.read_amplitudes()
-            if data is not None:
-                self.key_logger.write_sample(data, self.brainbox_stream.Fs)
-                self.sample_counter += len(data)
+            if not DataCollection.DEMO_MODE:
+                data = self.brainbox_stream.read_amplitudes()
+                if data is not None:
+                    self.key_logger.write_sample(data, self.brainbox_stream.Fs)
+                    self.sample_counter += len(data)
+            else:
+                self.sample_counter += int(1/FPS * 10000)
 
             # event handler
             for event in pygame.event.get():
@@ -111,7 +118,8 @@ class DataCollection:
         # Done! Time to quit.
         pygame.quit()
 
-        self.key_logger.close()
+        if not DataCollection.DEMO_MODE:
+            self.key_logger.close()
 
 
     def event_quit(self):
@@ -143,7 +151,8 @@ class DataCollection:
 
     def action_end(self):
         """ Log the action and go back to waiting for an action to start """
-        self.key_logger.write(self.action, self.action_name)
+        if not DataCollection.DEMO_MODE:
+            self.key_logger.write(self.action, self.action_name)
         print(f"Action {self.action} completed and logged.")
 
         self.action_counter[self.action] += 1
