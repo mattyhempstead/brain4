@@ -28,6 +28,8 @@ def get_ml_data(
 
     shuffle_data:bool = True,
     filter_data: bool = True,
+
+    debug:bool = False,
 ):
     """
     Returns a data and labels as loaded from multiple files.
@@ -37,29 +39,29 @@ def get_ml_data(
     labels = []
 
     for file_name in file_names:
-        print(f"Loading sample file {file_name}")
+        if debug: print(f"Loading sample file {file_name}")
         samples_df = load_sample_data(samples_path + file_name)
-        print(f"Loaded {len(samples_df)} samples")
-        print(f"Downsampling @ n={downsample_rate}")
+        if debug: print(f"Loaded {len(samples_df)} samples")
+        if debug: print(f"Downsampling @ n={downsample_rate}")
         samples_df = downsample(samples_df, n=downsample_rate)
-        print(f"Downsampled to {len(samples_df)} samples")
+        if debug: print(f"Downsampled to {len(samples_df)} samples")
 
-        print(f"Loading event file {file_name}")
+        if debug: print(f"Loading event file {file_name}")
         events_df = load_event_data(
             file_path = events_path + file_name,
             event_id_map = event_id_map,
             event_color_map = event_color_map,
         )
-        print(f"Loaded {len(events_df)} events")
+        if debug: print(f"Loaded {len(events_df)} events")
         
 
-        print(f"Merging samples and events")
+        if debug: print(f"Merging samples and events")
         merge_df = merge_samples_events(
             samples_df, events_df, event_start, event_end,
             event_id_map = event_id_map,
             event_color_map = event_color_map,
         )
-        print("Merge complete")
+        if debug: print("Merge complete")
 
         # time_start = 30
         # time_end = 60
@@ -91,7 +93,7 @@ def get_ml_data(
 
     # Random arrange data
     if shuffle_data:
-        print("Shuffling data sequences and labels")
+        if debug: print("Shuffling data sequences and labels")
         new_idx = np.random.permutation(len(data))
         data = data[new_idx]
         labels = labels[new_idx]
