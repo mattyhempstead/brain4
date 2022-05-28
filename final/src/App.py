@@ -10,6 +10,8 @@ from InputBox import InputBox
 
 from brainbox.brainbox import brainbox_loop
 
+import HapticRelayer
+
 class App:
     BACKGROUND_COLOR = LIGHT_GREY
 
@@ -204,27 +206,33 @@ class App:
             if not self.upper and key.isalpha():
                 self.input_box.append_text(key.lower())
                 self.current_word += key.lower()
+                HapticRelayer.relay_text_from_keyboard(key.lower())
             else:
                 self.input_box.append_text(key)
                 self.current_word += key
+                HapticRelayer.relay_text_from_keyboard(key)
                 if not self.alpha:
                     self.current_word = ""
         elif key == "Space":
             self.input_box.append_text(" ")
             self.current_word = ""
+            HapticRelayer.relay_text_from_keyboard("Space")
         elif key == "Delete":
             self.input_box.delete_text()
             self.current_word = self.current_word[:-1]
         elif key == "Return":
             self.input_box.new_line()
+            HapticRelayer.relay_text_from_keyboard("Return")
             self.current_word = ""
         elif key == "Clear":
             self.input_box.clear_text()
+            HapticRelayer.relay_text_from_keyboard("Clear")
             self.current_word = ""
         elif key == "U/L":
             self.upper = not self.upper
         elif key == "Tab":
             self.input_box.append_text("    ")
+            HapticRelayer.relay_text_from_keyboard("Tab")
             self.current_word = ""
         elif key == "ABC":
             self.upper = False
