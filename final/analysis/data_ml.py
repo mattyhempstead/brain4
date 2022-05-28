@@ -15,7 +15,7 @@ import tensorflow as tf
 def get_ml_data(
     events_path: str,
     samples_path: str,
-    file_names: list[str],
+    file_names: list,
 
     event_id_map: dict,
     event_color_map: dict,
