@@ -1,0 +1,10 @@
+Please read the report for more information on how to finalise development of the haptic component. I have provided mappings for the default state " " 
+as well the characters "1" and "A". 
+
+To setup the rest of the mappings follow these steps:
+1) Make 0 and 1 design in "desig.txt" for appropriate character
+2) run "python3 formatDes.py" and copy the output into appropriate section of "char_grid_mapper.txt"
+3) run "python3 resetDesig.py" to reset "desig.txt" to default state (all 0s)
+4) Select a new character and start from step 1 till all characters have been mapped.
+
+HapticRelayer.py shows examples for characters "1" and "A", to observe this run "python3 HapticRelayer.py"
