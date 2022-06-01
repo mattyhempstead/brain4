@@ -1,4 +1,9 @@
-Please read the report for more information on how to finalise development of the haptic component. I have provided mappings for the default state " " 
+
+This is a 343 cm3  cubical device. It has 49 metal rods, placed in a 7x7 grid. This device is placed on touch-responsive areas of the patient's body.
+By default all rods are inactive, and upon character selection, HapticRelayer.py maps the selected character to a matrix which represents the character pattern.
+
+
+I have provided mappings for the default state " " 
 as well the characters "1" and "A". 
 
 To setup the rest of the mappings follow these steps:
