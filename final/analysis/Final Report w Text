@@ -1,0 +1,1944 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "MiMZMZYYpFA9"
+   },
+   "source": [
+    "# Final Report"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "hZZESMLfqCMX"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "zd11uFJxp8Dd"
+   },
+   "source": [
+    "## 1. Executive Summary"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Patients suffering from motor-neuron diseases experience difficulty communicating through traditional input devices such as keyboards. However, in most cases, patients retain functionality of the eyes, thus opening a potential channel for communication. In the present work, an innovative virtual keyboard using eye movements was developed for patients with limited motor function and speech. Using an electrooculography (EOG) based human-computer interface, eye movements were encoded to operate an intuitive binary tree keyboard. By enabling them to type and communicate by digital means, our solution drastically improves patient quality of life.\n",
+    "\n",
+    "The final implementation consists of four distinct stages: data acquisition, processing, classification and user interface, bridging the gap between physics and data science.  The physics colleagues designed and evaluated digital filters to de-noise SpikerBox data, finding that the Butterworth low-pass filter provided the ideal balance between project requirements and computational cost. Three machine learning classification schemes were evaluated using graphical, qualitative and quantitative methods. With consideration to the end-user, speed was selected as a key metric for model analysis as the keyboard should have minimal delay between action execution and realization in the virtual environment. Moreover, the classification model must be generalisable and demonstrate a high degree of accuracy across all users in order to be a viable solution. Finally, a virtual keyboard requires a low false discovery rate (FDR) as misidentifying inputs would be more detrimental to user-experience than a non-event. Using the aforementioned criteria, it was determined that an artificial neural network (ANN) was the optimal classification model for a virtual keyboard. \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "ri2fXIvFp8GH"
+   },
+   "source": [
+    "## 2. Aim and Background"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "UYqcpOKnp8Ig"
+   },
+   "source": [
+    "### 2.1 Problem"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Every day, hundreds of people around the world are diagnosed with motor neurone diseases. (\"What is ALS/MND?\", 2022).\n",
+    "Patients often have trouble communicating, mostly due to the damage which is caused to the neurons responsible for the functioning of the mouth, tongue and/or larynx. They also often have difficulty using their hands due to a weak grip, muscle cramps and twitches. As a result, patients have trouble using input devices such as keyboards that require hands as well as alternative methods like speech-to-text.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "uZzWojd-rBmf"
+   },
+   "source": [
+    "### 2.2 Aim"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Our goal was to provide an alternate method for patients with limited motor function and speech to communicate and type. We decided to develop an efficient and intuitive virtual keyboard layout which would use eye movements as input, as this is one of the only modes of communication retained by patients. Minimization of user fatigue was a key goal in the design of the product, as sick patients using it would be more prone to fatigue than the average person."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2.3 Background"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2.3.1 SpikerBox and Electrooculography (EOG)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "As a result of its bioelectromagnetic complexities, a potential exists between the cornea and retina in the eye. This system can effectively be modeled as a single dipole in which motion of the eye results in a change of dipole orientation, inducing a measurable change in the electric potential field it generates. When situated between two electrodes placed on opposite sides of the eye, this change in potential produces a characteristic signal known as an electrooculogram (EOG) (Bulling 2009). \n",
+    "\n",
+    "The SpikerBox, a low cost, open-source bio amplifier with EOG capabilities, was utilized for data acquisition. As each eye movement has a characteristic waveform and amplitude pattern, motion such as left and right gazes as well as blinks and winks can be differentiated using information encoded in the EOG spike signal. On the basis, it is possible to classify and assign eye movements to a discrete set of user-inputs to interact with virtual environments.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2.3.2 Classification and User Interface"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "To generate control commands for the virtual keyboard from the time-series of EOG data, intentional eye movements were classified in real-time. In addition to demonstrating a high degree of fidelity and efficiency, the implemented classification scheme must be flexible and adaptive. For this reason, three machine learning classification schemes (feed-forward ANN, Support Vector Machine (SVM) and Random Forest) were evaluated with the optimal scheme being employed in the final solution. A Pygame-based UI that is fed event labels in real-time renders the virtual keyboard layout and updates according to the user input."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "hGFpT0m-rBxy"
+   },
+   "source": [
+    "## 3. Methods\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Physics students used their expertise to collect and clean EOG data. Data-Science students developed the virtual-keyboard based on (Tufte, 1986), (Tufte, 1990), (Tufte, 1997), and (Tufte, 2006). To classify EOG user-input as keyboard events they developed these models:\n",
+    "\n",
+    "  a) An Artificial Neural Network (ANN) (See 3.3.1)\n",
+    "  \n",
+    "  b) A Support Vector Machine (SVM) (See 3.3.2)\n",
+    "  \n",
+    "  c) An Extreme-Gradient Boosted Random-Forest (XGBRF) (See 3.3.3)\n",
+    "  \n",
+    "The team’s holistic evaluation strategy consisted of:\n",
+    "\n",
+    "  1) Graphical evaluation using numerous plots\n",
+    "  \n",
+    "  2) Quantitative evaluation using:\n",
+    "  \n",
+    "    a) No-resampling \n",
+    "     \n",
+    "    b) Simple-resampling \n",
+    "     \n",
+    "    c) Multiple-resampling\n",
+    "     \n",
+    "  3)Qualitative evaluation using Human-in-the-Loop Data Analytics principles.\n",
+    "  \n",
+    "The evaluation strategy is multi-layered as it covers all resampling types, mentioned in this ontology of error-estimation methods (Japkowicz & Shah, 2011). Furthermore, the Human-in-the-Loop approach allows the strategy to cover both technical and non-technical areas of evaluation. \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "HwcexQTIrB52"
+   },
+   "source": [
+    "### 3.1. Data Collection"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The EOG signal is measured with a SpikerBox, which has a sampling rate of 10kHz. An electrode was placed on either side of the eyes and another under the ear, which transfer the signal to the device then to a laptop via USB where it is analyzed.  \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Data was collected using an innovative interface involving the user following a green circle around the screen which at random intervals displays one of the three actions (left wink, right wink or double blink). The random movement of the circle simulates the eye movement of the user when using the product, which will be traveling around the keyboard looking for the next letter to type. Hence, this makes the data collected more realistic and increases the accuracy of classification."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "plt.imshow()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Figure 1: Data-flow Diagram"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "id": "l7Bv-0EM83z5"
+   },
+   "outputs": [
+    {
+     "ename": "ModuleNotFoundError",
+     "evalue": "No module named 'tensorflow'",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mModuleNotFoundError\u001b[0m                       Traceback (most recent call last)",
+      "\u001b[1;32m<ipython-input-1-4d90a10dd3e4>\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[0;32m      4\u001b[0m \u001b[1;32mimport\u001b[0m \u001b[0mpandas\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0mpd\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      5\u001b[0m \u001b[1;32mimport\u001b[0m \u001b[0mmatplotlib\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mpyplot\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0mplt\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m----> 6\u001b[1;33m \u001b[1;32mimport\u001b[0m \u001b[0mtensorflow\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0mtf\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m",
+      "\u001b[1;31mModuleNotFoundError\u001b[0m: No module named 'tensorflow'"
+     ]
+    }
+   ],
+   "source": [
+    "import time\n",
+    "import math\n",
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "import tensorflow as tf\n",
+    "from scipy import signal\n",
+    "import seaborn as sns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "colab": {
+     "base_uri": "https://localhost:8080/"
+    },
+    "id": "aCgoTZLc59ic",
+    "outputId": "94fa0c97-a3fd-4d31-f09f-3ffafa87af2e"
+   },
+   "outputs": [],
+   "source": [
+    "# CONFIG\n",
+    "\n",
+    "EVENT_ID_MAP = {\n",
+    "    None: 0,\n",
+    "    \"L\": 1,\n",
+    "    \"R\": 2,\n",
+    "    \"S\": 3,\n",
+    "}\n",
+    "EVENT_ID_LETTER_MAP = {EVENT_ID_MAP[i]:i for i in EVENT_ID_MAP}\n",
+    "\n",
+    "EVENT_COLOR_MAP = {\n",
+    "    None: \"black\",\n",
+    "    \"L\": \"red\",\n",
+    "    \"R\": \"blue\",\n",
+    "    \"S\": \"green\",\n",
+    "}\n",
+    "\n",
+    "EVENT_ID_NAME_MAP = {\n",
+    "    0: \"Nothing\",\n",
+    "    1: \"Left Wink\",\n",
+    "    2: \"Right Wink\",\n",
+    "    3: \"Dbl Blink\",\n",
+    "}\n",
+    "\n",
+    "BRAINBOX_SAMPLE_RATE = 10000\n",
+    "\n",
+    "DOWNSAMPLE_RATE = 100\n",
+    "\n",
+    "FILTER_DATA = True\n",
+    "FILTER_CUTOFF = 7\n",
+    "\n",
+    "NORMALISE_DATA = True\n",
+    "\n",
+    "EVENT_LENGTH = 2 # length of a given event sequence in seconds\n",
+    "EVENT_SAMPLE_COUNT = int(EVENT_LENGTH * BRAINBOX_SAMPLE_RATE / DOWNSAMPLE_RATE) # size of event in samples\n",
+    "\n",
+    "EVENT_START = -0.75\n",
+    "EVENT_START_OFFSET = int(EVENT_START * BRAINBOX_SAMPLE_RATE / DOWNSAMPLE_RATE)\n",
+    "\n",
+    "EVENT_END = -0.25\n",
+    "EVENT_END_OFFSET = int(EVENT_END * BRAINBOX_SAMPLE_RATE / DOWNSAMPLE_RATE)\n",
+    "\n",
+    "INPUT_SHAPE = (EVENT_SAMPLE_COUNT,)\n",
+    "OUTPUT_SHAPE = len(EVENT_ID_MAP)  # number of categories (including None)\n",
+    "\n",
+    "EVENTS_PATH = \"../src/data_collection/data/events/\"\n",
+    "SAMPLES_PATH = \"../src/data_collection/data/waves/\"\n",
+    "\n",
+    "FILE_NAMES_ALL = [\n",
+    "    \"DATA_2022-05-13_Josh_0001_3_1652400625\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_3_1652400939\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_4_1652401267\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_4_1652401740\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_5_1652405337\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_5_1652405637\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_6_1652406023\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_6_1652406202\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_7_1652406589\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_7_1652406788\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_8_1652407331\",\n",
+    "    \"DATA_2022-05-13_Josh_0001_8_1652407508\",\n",
+    "]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def load_sample_data(file_path:str):\n",
+    "    samples_df = pd.read_csv(\n",
+    "        f\"{file_path}.csv\",\n",
+    "    )\n",
+    "\n",
+    "    # Sort because some samples are not written in order\n",
+    "    samples_df = samples_df.sort_values(\"time_sec\", ascending=True)\n",
+    "    samples_df.reset_index(drop=True, inplace=True)\n",
+    "\n",
+    "    return samples_df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def load_event_data(file_path:str, event_id_map:dict, event_color_map:dict):\n",
+    "    \"\"\" Reads brainbox event data into a data frame \"\"\"\n",
+    "\n",
+    "    events_df = pd.read_csv(\n",
+    "        f\"{file_path}.csv\",\n",
+    "        names=[\"time_sec\", \"event_letter\", \"event_name\"],\n",
+    "        header=0,\n",
+    "    )\n",
+    "\n",
+    "    events_df[\"event_id\"] = events_df[\"event_letter\"].map(event_id_map)\n",
+    "    events_df[\"event_color\"] = events_df[\"event_letter\"].map(event_color_map)\n",
+    "\n",
+    "    return events_df\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def merge_samples_events(\n",
+    "    samples_df,\n",
+    "    events_df,\n",
+    "    event_start:float,\n",
+    "    event_end:float,\n",
+    "    event_id_map:dict,\n",
+    "    event_color_map:dict,\n",
+    "):\n",
+    "    \"\"\"\n",
+    "    Merges the sample and event dataframes.\n",
+    "\n",
+    "    Events will be assigned to individual samples within a specified time range around the market.\n",
+    "    \"\"\"\n",
+    "    # Add target classification event to each sample\n",
+    "    merge_df = samples_df.copy()\n",
+    "\n",
+    "    # Default is None (no event)\n",
+    "    merge_df[\"event_letter\"] = None\n",
+    "    merge_df[\"event_name\"] = \"Nothing\"\n",
+    "    merge_df[\"event_id\"] = event_id_map[None]\n",
+    "    merge_df[\"event_color\"] = event_color_map[None]\n",
+    "    #print(sample_100_df)\n",
+    "\n",
+    "    # Assign all events within range around their event marker\n",
+    "    for idx,row in events_df.iterrows():\n",
+    "        # Skip blinks for now\n",
+    "        # if row[\"event_type\"] not in [\"Left\", \"Right\"]:\n",
+    "        #     continue\n",
+    "\n",
+    "        event_interval = (merge_df[\"time_sec\"] > (row[\"time_sec\"] + event_start))\n",
+    "        event_interval &= (merge_df[\"time_sec\"] < (row[\"time_sec\"] + event_end))\n",
+    "        \n",
+    "        merge_df.loc[event_interval,\"event_id\"] = row[\"event_id\"]\n",
+    "        merge_df.loc[event_interval,\"event_name\"] = row[\"event_name\"]\n",
+    "        merge_df.loc[event_interval,\"event_color\"] = row[\"event_color\"]\n",
+    "\n",
+    "    return merge_df"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "gvrrURLQpFDk"
+   },
+   "source": [
+    "### 3.2. Data Preprocessing"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Our data pre-processing pipeline consists of four steps."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.2.1 Downsampling"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def data_downsample(sample_df, n=100):\n",
+    "    \"\"\"\n",
+    "    Downsamples the wave data (not events) to 1/nth of a second by taking mean sample over that period.\n",
+    "    \"\"\"\n",
+    "    # Crop size to allow downsampling\n",
+    "    sample_df = sample_df[:len(sample_df) - (len(sample_df)%n)]\n",
+    "    \n",
+    "    return pd.DataFrame({\n",
+    "        \"time_sec\": np.min(np.array(sample_df[\"time_sec\"]).reshape(-1,n), 1),\n",
+    "        \"sample\": np.mean(np.array(sample_df[\"sample\"]).reshape(-1,n), 1),\n",
+    "    })"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The first step of preprocessing is to mean-downsample the wave stream by a factor of 100, reducing the sample rate of the waveform from 10kHz to 100Hz. This transformation preserves the majority of the wave structure whilst simultaneously reducing the time it takes to perform the later data transformations as there are 100 times less values. Downsampling also reduces the risk of overfitting in the model as the input size is smaller."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.2.2 Data Segmentation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def data_segmentation(merge_df, event_sample_count:int, filter_data:bool):\n",
+    "    \"\"\"\n",
+    "    Returns a list of each time series sequence labelled by the event.\n",
+    "    \"\"\"\n",
+    "    print(\"Transforming data into individual segments...\")\n",
+    "\n",
+    "    seqs = []\n",
+    "    labels = []\n",
+    "\n",
+    "    for idx,row in merge_df[:-event_sample_count].iterrows():\n",
+    "        label = row[\"event_id\"]\n",
+    "        if label is None:\n",
+    "            label = -1\n",
+    "        labels.append(label)\n",
+    "\n",
+    "        seq = list(merge_df[\"sample\"][idx:idx+event_sample_count])\n",
+    "        seqs.append(seq)\n",
+    "\n",
+    "    seqs = np.array(seqs)\n",
+    "    labels = np.array(labels)\n",
+    "\n",
+    "    print(f\"Transformed into {seqs.shape[0]} segments of size {seqs.shape[1]}\")\n",
+    "    \n",
+    "    return (seqs, labels)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The next step of preprocessing is to splice the continuous stream of waveform data into chunks of length 2 seconds. This value was chosen as it was found to be long enough to contain the entire perturbation caused by a given action (e.g. Double Blink, Left Wink). This transformation is crucial as it generates input vectors of a standardized length (2 seconds x 100Hz = 200 values), allowing us to pass the waveform input directly into our machine learning model of choice."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.2.3 Filtering"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Butterworth filter\n",
+    "def data_filter(rawData, order:int=5, cutOff:int=7, Fs:int=10000):\n",
+    "    \"\"\"\n",
+    "    Low pass\n",
+    "    cutOff in Hz\n",
+    "    \"\"\"\n",
+    "    b, a = signal.butter(order, Wn=cutOff/(Fs/2)) \n",
+    "    # Zero Phase double filter\n",
+    "    filteredSignal = signal.filtfilt(b, a, rawData)\n",
+    "    return filteredSignal"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In typical operating environments, EOG signals can become contaminated by artifacts arising from muscle contractions, head-movements, and electromagnetic disturbances from power-line interference. To avoid inclusion of unwanted noise, it is necessary to remove high frequency contributions from these sources, while retaining the original signal of interest. A frequency spectrum analysis of raw EOG signals revealed that eye-movement is encoded within the sub-10 Hz range. On this basis, a low-pass Butterworth filter was selected for signal denoising.Optimal cut-off frequency was empirically determined to be 7Hz, while a fifth order filter provided the best trade-off between steepness of roll-off and computational cost. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.2.4 Normalization"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Another preprocessing step is the normalization of the signal. The signal can be influenced by factors such as electrode placement next to the eyes, and different individuals which can vary between data collection sessions. By normalizing the signals with a reference value, it is possible to more accurately compare and identify events produced. This is required to perform classification on these events."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "ename": "ModuleNotFoundError",
+     "evalue": "No module named 'tensorflow'",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mModuleNotFoundError\u001b[0m                       Traceback (most recent call last)",
+      "\u001b[1;32m<ipython-input-4-a465bdf88a4f>\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[1;32m----> 1\u001b[1;33m \u001b[1;32mfrom\u001b[0m \u001b[0mdata_ml\u001b[0m \u001b[1;32mimport\u001b[0m \u001b[0mget_ml_data\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m      2\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      3\u001b[0m \u001b[0mprint\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;34m\"Data Preprocessing\"\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      4\u001b[0m \u001b[0mfiles_data_all\u001b[0m \u001b[1;33m=\u001b[0m \u001b[1;33m[\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      5\u001b[0m \u001b[0mfiles_labels_all\u001b[0m \u001b[1;33m=\u001b[0m \u001b[1;33m[\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\Desktop\\2022 Uni Stuff\\DATA3888\\brain4-main\\final\\analysis\\data_ml.py\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[0;32m     10\u001b[0m \u001b[1;32mimport\u001b[0m \u001b[0mmath\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     11\u001b[0m \u001b[1;32mimport\u001b[0m \u001b[0mmatplotlib\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mpyplot\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0mplt\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m---> 12\u001b[1;33m \u001b[1;32mimport\u001b[0m \u001b[0mtensorflow\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0mtf\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     13\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     14\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mModuleNotFoundError\u001b[0m: No module named 'tensorflow'"
+     ]
+    }
+   ],
+   "source": [
+    "def data_normalise(data):\n",
+    "    return (data - data.mean()) / data.std()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(\"Data Preprocessing\\n\")\n",
+    "files_data_all = []\n",
+    "files_labels_all = []\n",
+    "\n",
+    "for file_name in FILE_NAMES_ALL:\n",
+    "    start_time = time.time()\n",
+    "\n",
+    "    print(f\"Loading sample file '{file_name}'\")\n",
+    "    samples_df = load_sample_data(SAMPLES_PATH + file_name)\n",
+    "    print(f\"Loaded {len(samples_df)} samples\")\n",
+    "    \n",
+    "    print(f\"Downsampling @ n={DOWNSAMPLE_RATE}\")\n",
+    "    samples_df = data_downsample(samples_df, n=DOWNSAMPLE_RATE)\n",
+    "    print(f\"Downsampled to {len(samples_df)} samples\")\n",
+    "\n",
+    "    print(f\"Loading event file '{file_name}'\")\n",
+    "    events_df = load_event_data(\n",
+    "        file_path = EVENTS_PATH + file_name,\n",
+    "        event_id_map = EVENT_ID_MAP,\n",
+    "        event_color_map = EVENT_COLOR_MAP,\n",
+    "    )\n",
+    "    print(f\"Loaded {len(events_df)} events\")\n",
+    "\n",
+    "    print(f\"Merging samples and events\")\n",
+    "    merge_df = merge_samples_events(\n",
+    "        samples_df, events_df,\n",
+    "        event_start = EVENT_START,\n",
+    "        event_end = EVENT_END,\n",
+    "        event_id_map = EVENT_ID_MAP,\n",
+    "        event_color_map = EVENT_COLOR_MAP,\n",
+    "    )\n",
+    "#     print(\"Merge complete\")\n",
+    "\n",
+    "    # Segment data for ML model input\n",
+    "    seq_data, seq_labels = data_segmentation(\n",
+    "        merge_df,\n",
+    "        event_sample_count=EVENT_SAMPLE_COUNT,\n",
+    "        filter_data=FILTER_DATA,\n",
+    "    )\n",
+    "\n",
+    "    # Apply filters before we do the normalisation\n",
+    "    # One reason is that mains 50Hz will increase std for that sample\n",
+    "    if FILTER_DATA:\n",
+    "        for i,seq in enumerate(seq_data):\n",
+    "            seq_data[i] = data_filter(seq, cutOff=FILTER_CUTOFF, Fs=100) # Account for downsampling\n",
+    "\n",
+    "    # Normalise relative to the 2 second interval\n",
+    "    # Note that this method will scale non-actions to have large magnitudes\n",
+    "    if NORMALISE_DATA:\n",
+    "        for i,seq in enumerate(seq_data):\n",
+    "            seq_data[i] = data_normalise(seq)\n",
+    "\n",
+    "    files_data_all.append(seq_data)\n",
+    "    files_labels_all.append(seq_labels)\n",
+    "\n",
+    "    print(f\"Loaded and preprocessed file data in {time.time()-start_time:.2f}s\")\n",
+    "    print(\"\")\n",
+    "    \n",
+    "print(\"Finished data preprocessing\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "2RNgpn2dpFGW"
+   },
+   "source": [
+    "### 3.3 Models"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import tensorflow as tf\n",
+    "\n",
+    "def get_model_ann():\n",
+    "    model = tf.keras.Sequential([\n",
+    "        tf.keras.layers.Flatten(input_shape=INPUT_SHAPE),\n",
+    "        tf.keras.layers.Dropout(.50, input_shape=INPUT_SHAPE),\n",
+    "        tf.keras.layers.Dense(64, activation='relu'),\n",
+    "        tf.keras.layers.Dense(16, activation='relu'),\n",
+    "        tf.keras.layers.Dense(OUTPUT_SHAPE)\n",
+    "    ])\n",
+    "    return model\n",
+    "get_model_ann().summary()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.3.1 ANN"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Artificial neural networks (ANN) attempt to simulate the network of neurons in the human brain to develop algorithms for models.The keras/tensorflow package was used to develop the neural network architecture. A common approach to handle the sequence dependence of time-series data is to use a recurrent network.  However, as a result of segmenting data into independent windows of fixed size, a feed-forward network (with 200-wide vector input and 4-vector output) was more appropriate. Through experimentation, the optimal network was designed with an initial dropout layer and two fully connected, dense layers.  "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.3.2  SVM "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn import svm\n",
+    "\n",
+    "def get_model_svm():\n",
+    "    clf = svm.SVC()\n",
+    "    return clf"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Support vector machines are statistical and machine-learning techniques with the primary goal of prediction. They can be applied to continuous, binary, and categorical outcomes analogous to Gaussian, logistic, and multinomial regression (Guenther and Schonlau, 2016).\n",
+    "By visual inspection of filtered signals, it appeared that the various classes of event were linearly separable (see fig X). On this basis, the segmented data windows were passed directly into the SVM model for training without prior feature extraction.    \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Random-Forest with XGBoost "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from xgboost import XGBRFClassifier\n",
+    "\n",
+    "# Hyper-Parameters\n",
+    "RF_N_TREES = [10,50,100,500,1000,5000]\n",
+    "RF_N_FEATURES = [x for x in np.arange(0.1, 1.1, 0.1)]\n",
+    "\n",
+    "def get_model_rf(num_trees=50, num_features=0.1):\n",
+    "    return XGBRFClassifier(\n",
+    "        n_estimators=num_trees,\n",
+    "        subsample=0.9,\n",
+    "        colsample_bynode=num_features\n",
+    "    )"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Random-Forests are an ensemble learning method based on decision trees (Breiman & Cutler, 2006). XGBoost performs additive optimization in functional space (Chen & Guestrin, 2016).\n",
+    "We trained 16 XGBoosted Random-Forests using the xgboost module, with varying hyper-parameters like number of decision trees and number of features. The performance of these classifiers was compared using boxplots.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "SGYMbnF6pFJQ"
+   },
+   "source": [
+    "### 3.4. Evaluation Strategies"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "ANN_EPOCHS = 3\n",
+    "ANN_OPTIMIZER = 'adam'\n",
+    "\n",
+    "def train_model_ann(model, train_data, train_labels, test_data, test_labels):\n",
+    "    print(\"Training ANN with\", len(train_labels), \"samples\")\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    # Trains model and returns history dict\n",
+    "    model.compile(\n",
+    "        optimizer=ANN_OPTIMIZER,\n",
+    "        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),\n",
+    "        metrics=['accuracy']\n",
+    "    )\n",
+    "    history = model.fit(\n",
+    "        train_data,\n",
+    "        train_labels,\n",
+    "        epochs=ANN_EPOCHS,\n",
+    "        validation_data=(test_data, test_labels)\n",
+    "    #     batch_size=16\n",
+    "    )\n",
+    "\n",
+    "    print(f\"Completed training ANN in {time.time()-start_time:.2f}s\")\n",
+    "\n",
+    "    print(f\"Generating predictions for test set with size\", len(test_labels))\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    test_out = model.predict(test_data)\n",
+    "    test_probs = tf.nn.softmax(test_out, axis=1)\n",
+    "    test_pred = np.argmax(test_probs, axis=1)\n",
+    "    \n",
+    "    print(f\"Generated predictions in {time.time()-start_time:.2f}s\")\n",
+    "\n",
+    "    # Return predictions for test set\n",
+    "    return test_pred"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def train_model_svm(model, train_data, train_labels, test_data, test_labels):\n",
+    "    subset = np.random.random(len(train_data)) < 0.1\n",
+    "    print(\"Training SVM with\", sum(subset), \"samples\")\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    model.fit(train_data[subset], train_labels[subset])\n",
+    "    \n",
+    "    print(f\"Completed training SVM in {time.time()-start_time:.2f}s\")\n",
+    "\n",
+    "    print(f\"Generating predictions for test set with size\", len(test_labels))\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    test_pred = model.predict(test_data)\n",
+    "\n",
+    "    print(f\"Generated predictions in {time.time()-start_time:.2f}s\")\n",
+    "    \n",
+    "    # Return predictions for test set\n",
+    "    return test_pred"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Random Forest Training and Testing\n",
+    "def train_model_xgbrf(model, train_data, train_labels, test_data, test_labels):\n",
+    "    print(\"Training XGBRandomForest with\", len(train_data), \"samples\")\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    model.fit(train_data, train_labels)\n",
+    "    \n",
+    "    print(f\"Completed training XGBRandomForest in {time.time()-start_time:.2f}s\")\n",
+    "    \n",
+    "    print(f\"Generating predictions for test set with size\", len(test_labels))\n",
+    "    \n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    test_pred = model.predict(test_data)\n",
+    "    \n",
+    "    print(f\"Generated predictions in {time.time()-start_time:.2f}s\")\n",
+    "\n",
+    "    # Return predictions for test set\n",
+    "    return test_pred"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def confusion_matrix(label_pred, label_true):\n",
+    "    # Rows are \"real\" labels\n",
+    "    # Columns are \"predicted\" labels\n",
+    "    conf = tf.math.confusion_matrix(\n",
+    "        label_pred,\n",
+    "        label_true\n",
+    "    )\n",
+    "\n",
+    "    return conf"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# 12 folds with all files\n",
+    "# ~1 minute per fold -> ~12 minutes\n",
+    "CV_K = len(FILE_NAMES_ALL)\n",
+    "\n",
+    "cv_conf_ann = []\n",
+    "cv_conf_svm = []\n",
+    "cv_conf_rf = []\n",
+    "\n",
+    "start_time_training = time.time()\n",
+    "for k in range(CV_K):\n",
+    "    print(f\"Fold #{k+1}/{CV_K}\")\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    # Get training data/labels\n",
+    "    train_data = np.concatenate(files_data_all[0:k] + files_data_all[k+1:])\n",
+    "    train_labels = np.concatenate(files_labels_all[0:k] + files_labels_all[k+1:])\n",
+    "    print(train_data.shape, train_labels.shape)\n",
+    "\n",
+    "    # Get testing data/labels\n",
+    "    test_data = files_data_all[k]\n",
+    "    test_labels = files_labels_all[k]\n",
+    "    print(test_data.shape, test_labels.shape)\n",
+    "\n",
+    "    # Train and test ANN\n",
+    "    model_ann = get_model_ann()\n",
+    "    test_pred_ann = train_model_ann(model_ann, train_data, train_labels, test_data, test_labels)\n",
+    "    conf_ann = confusion_matrix(test_pred_ann, test_labels)\n",
+    "    cv_conf_ann.append(conf_ann)\n",
+    "\n",
+    "    # Train and test SVM\n",
+    "    model_svm = get_model_svm()\n",
+    "    test_pred_svm = train_model_svm(model_svm, train_data, train_labels, test_data[:10000], test_labels[:10000])\n",
+    "    conf_svm = confusion_matrix(test_pred_svm, test_labels[:10000])\n",
+    "    cv_conf_svm.append(conf_svm)\n",
+    "\n",
+    "    # Train and Test XGBRandomForest\n",
+    "    model_xgbrf = get_model_rf()\n",
+    "    test_pred_xgbrf = train_model_xgbrf(model_xgbrf, train_data, train_labels, test_data, test_labels)\n",
+    "    conf_xgbrf = confusion_matrix(test_pred_xgbrf, test_labels)\n",
+    "    cv_conf_rf.append(conf_xgbrf)\n",
+    "\n",
+    "    print(f\"Done fold in {time.time() - start_time:.2f}s\\n\")\n",
+    "\n",
+    "print(f\"Training complete in {time.time() - start_time_training:.2f}s\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The classifier was evaluated upon metrics which suitably represent the user experience of the virtual keyboard. \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(cv_conf_ann)\n",
+    "print(cv_conf_svm)\n",
+    "print(cv_conf_rf)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.4.1 Accuracy"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The accuracy of the classifier is its ability to generalize patterns and recognize features effectively in order to identify them in unseen datasets. \n",
+    "\n",
+    "This is required as personalization is a key feature of the product, and being able to classify eye movements of different individuals is a requirement that needs to be met.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.4.2 False Discovery Rate"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "FDR(False Discovery Rate) is the rate of falsely classified events over the total number of classified events. In the context of the project, this represents the times an unintentional eye movement was classified as either one of the inputs. \n",
+    "This is detrimental for a keyboard as every false input would require correction by the user which would cause great frustration. Hence, it is ideal for this metric to be as low as possible.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#### 3.4.3 Cross Validation"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The above metrics were evaluated using k-fold cross validation, which is a technique involving splitting the dataset into k groups to test and compare. For this project, a k-value of 12 was used.  \n",
+    "This evaluation method was chosen as it is able to produce relatively unbiased results on a limited dataset. \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The team followed a holistic evaluation strategy consisting of Graphical, Qualitative and Quantitative methods. A human-centered approach was maintained, by following the vision of the Human Centered Technology Cluster. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.5.1 Graphical Evaluation Methods"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "##### a) Line Charts"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "For the ANN,12 line-charts plotted the training and validation  accuracy for each cross validation fold. These graphs were combined to produce two line charts which represent Training Accuracy v/s Epoch Number and Testing Accuracy v/s Epoch Number alongside the average accuracy value.\n",
+    "A line-chart was used to visualize the ANN’s predicted probabilities of all class-labels, against one test-sample. \n",
+    "17 line-charts, alongside color-coded event markers, were used to visualize the timing of occurrence of events.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "##### b) Box-Plots"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "For the ANN, a box-plot visualized the mean test accuracy of the 12-Fold Cross-Validation.\n",
+    "For the XGBRandomForest, two boxplots visualized the effects of hyper-parameter tuning. \n",
+    "Boxplots were also used to visualize the cross-validation accuracy of the classifiers under simple and multiple resampling conditions.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "##### c) Bar-Graphs "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Bar-graphs were used to visualize the distribution of classification labels in the dataset."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "##### d) Scatter-Plots"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Scatter-plots were used to compare the timing of true-events and predicted-events. This was done using 2 adjacent scatter-plots."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.5.2 Qualitative Evaluation Methods"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The team’s qualitative evaluation strategy was governed by Human-in-the-Loop Data Analytics principles. We used a cognitive walkthrough to evaluate keyboard layouts, and value proposition canvases to compare the fit between user-profile and product values for various prototype iterations. \n",
+    "\n",
+    "Cognitive Walkthrough: To ensure that users understood the intended meaning of the keyboard visualization, contextual cues are provided at each node about traversal choices. To ensure attention is paid to these cues, a new color was assigned to them. To ensure the users understood the relevant parts of the keyboard, all keys were labeled using de facto symbols/terms. User discovery of action sequences was facilitated by the addition of cues, and to ensure the users understood the outcome of their choice, the text-box and the haptic communicator provided feedback.\n",
+    "\n",
+    "Value Proposition Canvas: We developed a value map for each prototype iteration, to assess the fit between the solutions we developed, and the problems users face. These value maps were compared based on their ability to alleviate user-pains, enhance user-gains and completion capability of user jobs.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3.5.3 Quantitative Evaluation Methods"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The quantitative evaluation strategy was inspired by figure 5.1 of (Japkowicz & Shah, 2011), the error estimation methods used for each of the resampling categories are:\n",
+    " \n",
+    " a) No-Resampling:\n",
+    "  \n",
+    "    i) Hold-out evaluation;\n",
+    " \n",
+    " b) Simple-Resampling:\n",
+    "  \n",
+    "    i) Stratified 5-Fold Cross-Validation;\n",
+    " \n",
+    " c) Multiple-Resampling:\n",
+    "  \n",
+    "    i) Repeated 5-fold Cross-Validation;\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "ANN_EPOCHS = 3\n",
+    "ANN_OPTIMIZER = 'adam'\n",
+    "\n",
+    "def train_model_ann(model, train_data, train_labels, test_data, test_labels):\n",
+    "    print(\"Training ANN with\", len(train_labels), \"samples\")\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    # Trains model and returns history dict\n",
+    "    model.compile(\n",
+    "        optimizer=ANN_OPTIMIZER,\n",
+    "        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),\n",
+    "        metrics=['accuracy']\n",
+    "    )\n",
+    "    history = model.fit(\n",
+    "        train_data,\n",
+    "        train_labels,\n",
+    "        epochs=ANN_EPOCHS,\n",
+    "        validation_data=(test_data, test_labels)\n",
+    "    #     batch_size=16\n",
+    "    )\n",
+    "\n",
+    "    print(f\"Completed training ANN in {time.time()-start_time:.2f}s\")\n",
+    "\n",
+    "    print(f\"Generating predictions for test set\", len(test_labels))\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    test_out = model.predict(test_data)\n",
+    "    test_probs = tf.nn.softmax(test_out, axis=1)\n",
+    "    test_pred = np.argmax(test_probs, axis=1)\n",
+    "    \n",
+    "    print(f\"Generated predictions in {time.time()-start_time:.2f}s\")\n",
+    "\n",
+    "    # Return predictions for test set\n",
+    "    return test_pred"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def train_model_svm(model, train_data, train_labels, test_data, test_labels):\n",
+    "    subset = np.random.random(len(train_data)) < 0.1\n",
+    "    print(\"Training SVM with\", sum(subset), \"samples\")\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    model.fit(train_data[subset], train_labels[subset])\n",
+    "    \n",
+    "    print(f\"Completed training SVM in {time.time()-start_time:.2f}s\")\n",
+    "\n",
+    "    print(f\"Generating predictions for test set\", len(test_labels))\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    test_pred = model.predict(test_data)\n",
+    "\n",
+    "    print(f\"Generated predictions in {time.time()-start_time:.2f}s\")\n",
+    "    \n",
+    "    # Return predicions for test set\n",
+    "    return test_pred"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Insert Random forest thing"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def confusion_matrix(label_pred, label_true):\n",
+    "    # Rows are \"real\" labels\n",
+    "    # Columns are \"predicted\" labels\n",
+    "    conf = tf.math.confusion_matrix(\n",
+    "        label_pred,\n",
+    "        label_true\n",
+    "    )\n",
+    "\n",
+    "    return conf"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Fold #1/3\n"
+     ]
+    },
+    {
+     "ename": "NameError",
+     "evalue": "name 'files_data_all' is not defined",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+      "\u001b[1;32m<ipython-input-12-78cb1d7e08fd>\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[0;32m     10\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     11\u001b[0m     \u001b[1;31m# Get training data/labels\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m---> 12\u001b[1;33m     \u001b[0mtrain_data\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mnp\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mconcatenate\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mfiles_data_all\u001b[0m\u001b[1;33m[\u001b[0m\u001b[1;36m0\u001b[0m\u001b[1;33m:\u001b[0m\u001b[0mk\u001b[0m\u001b[1;33m]\u001b[0m \u001b[1;33m+\u001b[0m \u001b[0mfiles_data_all\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0mk\u001b[0m\u001b[1;33m+\u001b[0m\u001b[1;36m1\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     13\u001b[0m     \u001b[0mtrain_labels\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mnp\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mconcatenate\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mfiles_labels_all\u001b[0m\u001b[1;33m[\u001b[0m\u001b[1;36m0\u001b[0m\u001b[1;33m:\u001b[0m\u001b[0mk\u001b[0m\u001b[1;33m]\u001b[0m \u001b[1;33m+\u001b[0m \u001b[0mfiles_labels_all\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0mk\u001b[0m\u001b[1;33m+\u001b[0m\u001b[1;36m1\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     14\u001b[0m     \u001b[0mprint\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mtrain_data\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mshape\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mtrain_labels\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mshape\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mNameError\u001b[0m: name 'files_data_all' is not defined"
+     ]
+    }
+   ],
+   "source": [
+    "CV_K = len(FILE_NAMES_ALL)\n",
+    "\n",
+    "cv_conf_ann = []\n",
+    "cv_conf_svm = []\n",
+    "# cv_conf_rf = []\n",
+    "\n",
+    "for k in range(CV_K):\n",
+    "    print(f\"Fold #{k+1}/{CV_K}\")\n",
+    "    start_time = time.time()\n",
+    "    \n",
+    "    # Get training data/labels\n",
+    "    train_data = np.concatenate(files_data_all[0:k] + files_data_all[k+1:])\n",
+    "    train_labels = np.concatenate(files_labels_all[0:k] + files_labels_all[k+1:])\n",
+    "    print(train_data.shape, train_labels.shape)\n",
+    "    \n",
+    "    test_data = files_data_all[k]\n",
+    "    test_labels = files_labels_all[k]\n",
+    "    print(test_data.shape, test_labels.shape)\n",
+    "\n",
+    "    # Train and test ANN\n",
+    "    model_ann = get_model_ann()\n",
+    "    test_pred_ann = train_model_ann(model_ann, train_data, train_labels, test_data, test_labels)\n",
+    "    conf_ann = confusion_matrix(test_pred_ann, test_labels)\n",
+    "    cv_conf_ann.append(conf_ann)\n",
+    "    \n",
+    "    # Train and test SVM\n",
+    "    model_svm = get_model_svm()\n",
+    "    test_pred_svm = train_model_svm(model_svm, train_data, train_labels, test_data[:10000], test_labels[:10000])\n",
+    "    conf_svm = confusion_matrix(test_pred_svm, test_labels[:10000])\n",
+    "    cv_conf_svm.append(conf_svm)\n",
+    "\n",
+    "    print(f\"Done fold in {time.time() - start_time:.2f}s\\n\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[]\n",
+      "[]\n"
+     ]
+    }
+   ],
+   "source": [
+    "\n",
+    "print(cv_conf_ann)\n",
+    "print(cv_conf_svm)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "T2YPuEpSrTrv"
+   },
+   "source": [
+    "## 4. Results"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "MxCTdo0_rTuH"
+   },
+   "source": [
+    "### 4.1 Part A - Evaluation Results"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def print_confusion_matrix(conf):\n",
+    "    print(conf)\n",
+    "    \n",
+    "    overall_total = sum(sum(conf))\n",
+    "    overall_correct = sum([conf[i][i] for i in range(len(conf))])\n",
+    "    print(f\"Overall accuracy: {100*overall_correct/overall_total:.2f}% ({overall_correct}/{overall_total})\")\n",
+    "    \n",
+    "    fp = sum(conf[0][1:])\n",
+    "    tp = sum(sum(conf[1:]))\n",
+    "    print(f\"False positives {fp}\")\n",
+    "    print(f\"True positives {tp}\")\n",
+    "    print(f\"False discovery (fp/(tp+fp)): {fp/(fp+tp):.4f} ({fp}/{fp+tp})\")\n",
+    "    \n",
+    "    for i in range(len(conf)):\n",
+    "        letter = str(EVENT_ID_LETTER_MAP[i])[0]\n",
+    "        \n",
+    "        total = sum(conf[i])\n",
+    "        correct = conf[i][i]\n",
+    "        acc_total = 100*correct/total\n",
+    "        \n",
+    "        s = f\"Event {letter} ({i}) accuracy: {correct:6}/{total: <6} (t_acc {acc_total:5.2f}%)\"\n",
+    "        if i > 0:\n",
+    "            acc_event = 100*correct/(total - conf[i][0])\n",
+    "            s += f\" (e_acc {acc_event:5.2f}%)\"\n",
+    "        print(s)\n",
+    "        \n",
+    "    print(\"\")\n",
+    "\n",
+    "    return conf"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "total_conf_ann = np.sum(cv_conf_ann, axis=0)\n",
+    "print_confusion_matrix(total_conf_ann)\n",
+    "\n",
+    "total_conf_svm = np.sum(cv_conf_svm, axis=0)\n",
+    "print_confusion_matrix(total_conf_svm)\n",
+    "\n",
+    "total_conf_rf = np.sum(cv_conf_rf, axis=0)\n",
+    "print_confusion_matrix(total_conf_rf)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def plotConfMatrix2(models, model_names):\n",
+    "    fig = plt.figure(figsize=(20,10))\n",
+    "    plt.subplots_adjust(wspace=0.1, hspace=0.05)\n",
+    "    sns.set(font_scale=1.3)\n",
+    "    gs = fig.add_gridspec(2,3)\n",
+    "    \n",
+    "    # Normalize plots\n",
+    "    for index, model in enumerate(models):\n",
+    "        normalize = np.sum(model, axis=1)\n",
+    "        model = model/normalize.reshape(-1,1)\n",
+    "        ax = fig.add_subplot(gs[0, index])\n",
+    "        s = sns.heatmap(model, annot=True, cmap='Blues', ax=fig.add_subplot(gs[0,index]), \n",
+    "                        xticklabels=['No Event', 'Left', 'Right', 'Dbl Blink'], \n",
+    "                        yticklabels=['No Event', 'Left', 'Right', 'Dbl Blink'])\n",
+    "        s.set(xlabel='Predicted', ylabel='Actual')\n",
+    "        ax.set_title(f'{model_names[index]} CV Normalized Confusion Matrix')\n",
+    "        ax.xaxis.set_ticklabels(['No Event', 'Left', 'Right', 'Dbl Blink'])\n",
+    "        ax.yaxis.set_ticklabels(['No Event', 'Left', 'Right', 'Dbl Blink'], rotation=0)\n",
+    "        ax.axis('off')\n",
+    "        ax.axis('tight')\n",
+    "\n",
+    "    ax = fig.add_subplot(gs[1,:])\n",
+    "    columns = ('Metrics', 'ANN', 'SVM', 'RF')\n",
+    "\n",
+    "    row_labels = [\n",
+    "        \"Accuracy\",\n",
+    "        \"B\",\n",
+    "        \"C\",\n",
+    "        \"D\",\n",
+    "        \"E\",\n",
+    "        \"F\",\n",
+    "        \"G\",\n",
+    "        \"H\",\n",
+    "        \"I\",\n",
+    "        \"J\"\n",
+    "    ]\n",
+    "\n",
+    "    data = []\n",
+    "    for i in range(10):\n",
+    "        data.append([f\"{3.53242424:.2f}\", f\"{3.53242424:.2f}\", f\"{3.53242424:.2f}\"])\n",
+    "#     data = np.random.random((10,3)) #Insert data for all of the columns as array \n",
+    "\n",
+    "    table = ax.table(cellText=data, colLabels=columns, rowLabels=row_labels, loc='center')\n",
+    "    \n",
+    "    table.auto_set_font_size(False)\n",
+    "    table.set_fontsize(20) \n",
+    "    table.scale(0.5, 2)\n",
+    "    \n",
+    "    ax.axis('tight')\n",
+    "    ax.axis('off')\n",
+    "    fig.tight_layout()\n",
+    "    \n",
+    "    plt.show()\n",
+    "\n",
+    "\n",
+    "plotConfMatrix2(\n",
+    "    [total_conf_ann, total_conf_svm, total_conf_rf],\n",
+    "    ['ANN', 'SVM', 'RF']\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### a) Graphical Evaluation"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Based on graphical evaluation of cross-validation scores, using simple and multiple resampling, the aggregate accuracies of the classifiers are relatively close, and require quantitative testing to verify whether the differences are statistically significant.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### b) Quantitative Evaluation"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "To determine whether the difference in accuracy is statistically significant, the team used principles mentioned in section 6.7 of (Japkowicz & Shah, 2011).\n",
+    "\n",
+    "The results of the Friedman Test, for all resampling types, had a p-value greater than 0.05, therefore we accept the Null-Hypothesis, thus the difference in accuracy is statistically insignificant.\n",
+    "\n",
+    "The ANN had the lowest false discovery rate amongst the three classifiers under no-resampling conditions, based on their confusion matrices.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### c) Qualitative Evaluation"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The best value-proposition fit for the virtual-keyboard stems from the ANN-integrated version. The cognitive walkthrough highlighted the importance of visual cues and these were added to the final layout.\n",
+    "\n",
+    "Thus, we selected the ANN due to its low false discovery rate, faster classification speed, high accuracy and satisfactory value-map fit.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 4.2 Part B"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 4.2.1 Deployment Process "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "An eye-controlled virtual keyboard was developed based on the ANN model, which classifies eye movements to trigger particular events on the keyboard. \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 4.2.2 Description of Keyboard"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The keyboard is presented as a 5-layer binary tree with the keys located at the bottom layer and the other nodes left as blanks. This allows users to interact with the keyboard using a minimum number of actions. Specifically, the cursor can be shifted to its left child by a left wink, or to its right child by a right wink. Left or right winks on a leaf node bring the cursor back to the root. The keyboard also supports the functionality of navigating up to the parent by double blinking on the nodes other than the root and the leaves. This allows users to undo the movements of the cursor when a wink is made unintentionally by the user or detected mistakenly by the model. Double blinks are also used as selections. Selecting the leaves either adds the character or the word, or performs certain modifications on the input, such as deleting the last character, starting a newline, etc. Selecting the root enables the switching between the different modes of the keyboard: lowercase alphabets, uppercase alphabets, punctuations and autocomplete. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 4.2.3 Description of Haptic Communicator "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "This component ensures that users receive accurate feedback for selections. The set-up code for this device is part of the final codebase; the development of the hardware could be undertaken for future work. \n",
+    "The HapticSetup.txt file provides more information about the development process.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def print_confusion_matrix(conf):\n",
+    "    print(conf)\n",
+    "    \n",
+    "    overall_total = sum(sum(conf))\n",
+    "    overall_correct = sum([conf[i][i] for i in range(len(conf))])\n",
+    "    print(f\"Overall accuracy: {100*overall_correct/overall_total:.2f}% ({overall_correct}/{overall_total})\")\n",
+    "    \n",
+    "    fp = sum(conf[0][1:])\n",
+    "    tp = sum(sum(conf[1:]))\n",
+    "    print(f\"False positives {fp}\")\n",
+    "    print(f\"True positives {tp}\")\n",
+    "    print(f\"False discovery (fp/(tp+fp)): {fp/(fp+tp):.4f} ({fp}/{fp+tp})\")\n",
+    "    \n",
+    "    for i in range(len(conf)):\n",
+    "        letter = str(EVENT_ID_LETTER_MAP[i])[0]\n",
+    "        \n",
+    "        total = sum(conf[i])\n",
+    "        correct = conf[i][i]\n",
+    "        acc_total = 100*correct/total\n",
+    "        \n",
+    "        s = f\"Event {letter} ({i}) accuracy: {correct:6}/{total: <6} (t_acc {acc_total:5.2f}%)\"\n",
+    "        if i > 0:\n",
+    "            acc_event = 100*correct/(total - conf[i][0])\n",
+    "            s += f\" (e_acc {acc_event:5.2f}%)\"\n",
+    "        print(s)\n",
+    "        \n",
+    "    print(\"\")\n",
+    "        \n",
+    "    return conf"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.0\n"
+     ]
+    },
+    {
+     "ename": "TypeError",
+     "evalue": "'numpy.float64' object is not iterable",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mTypeError\u001b[0m                                 Traceback (most recent call last)",
+      "\u001b[1;32m<ipython-input-15-2ea3a71c2f83>\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[0;32m      1\u001b[0m \u001b[0mtotal_conf_ann\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mnp\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mcv_conf_ann\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0maxis\u001b[0m\u001b[1;33m=\u001b[0m\u001b[1;36m0\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m----> 2\u001b[1;33m \u001b[0mprint_confusion_matrix\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mtotal_conf_ann\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m      3\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      4\u001b[0m \u001b[0mtotal_conf_svm\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mnp\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mcv_conf_svm\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0maxis\u001b[0m\u001b[1;33m=\u001b[0m\u001b[1;36m0\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      5\u001b[0m \u001b[0mprint_confusion_matrix\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mtotal_conf_svm\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m<ipython-input-14-2fc64effc618>\u001b[0m in \u001b[0;36mprint_confusion_matrix\u001b[1;34m(conf)\u001b[0m\n\u001b[0;32m      2\u001b[0m     \u001b[0mprint\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mconf\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      3\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m----> 4\u001b[1;33m     \u001b[0moverall_total\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mconf\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m      5\u001b[0m     \u001b[0moverall_correct\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0msum\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0mconf\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0mi\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0mi\u001b[0m\u001b[1;33m]\u001b[0m \u001b[1;32mfor\u001b[0m \u001b[0mi\u001b[0m \u001b[1;32min\u001b[0m \u001b[0mrange\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mlen\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mconf\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      6\u001b[0m     \u001b[0mprint\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;34mf\"Overall accuracy: {100*overall_correct/overall_total:.2f}% ({overall_correct}/{overall_total})\"\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mTypeError\u001b[0m: 'numpy.float64' object is not iterable"
+     ]
+    }
+   ],
+   "source": [
+    "total_conf_ann = np.sum(cv_conf_ann, axis=0)\n",
+    "print_confusion_matrix(total_conf_ann)\n",
+    "\n",
+    "total_conf_svm = np.sum(cv_conf_svm, axis=0)\n",
+    "print_confusion_matrix(total_conf_svm)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "j9z3anWmrTwe"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "HKFJra9urTyp"
+   },
+   "source": [
+    "## 5. Discussion and Conclusion"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "-sb2q5DyrnY_"
+   },
+   "source": [
+    "### 5.1 Issues Addressed"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 5.1.1 Issues Addressed in the Development Process"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "During the initial data collection phase, instructions and timestamps were manually recorded by one team member while another, attached to the SpikerBox, would execute the action. In addition to being inefficient, this process often resulted in misalignment between event timestamps and signal spikes. By developing a UI which integrated and automated instruction read-outs, event logging and simulation of random eye motion, this process was significantly streamlined and the dependency on a second team member removed, allowing more training data to be collected per session. With future implementations, packaging the data collection UI with the virtual keyboard will enable new users to fine tune pre-trained models for better generalisation.\n",
+    "\n",
+    "\n",
+    "Additionally, the design for the keyboard went through multiple iterations. Initially, a wheel type design was chosen, in order to cycle through all letters with a small amount of inputs. The downside of this design was that the user would have to navigate through more than 13 letters (half of the alphabet + additional punctuation etc) at worst. So a binary tree keyboard layout was chosen with the understanding of it having the shortest navigation times to improve usability of the product. \n",
+    "\n",
+    "\n",
+    "It was originally planned to use left and right eye movements for the project. However, this introduced the issue of unintentional movements of the eye being registered as inputs. To counter this, a protocol was suggested of adding double blinks before a horizontal eye movement to ensure the action was intentional.Unsurprisingly, this introduced a worsened user experience due to eye fatigue from the repeated blinking. In the end, winks were chosen as a superior input method.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 5.1.2 Limitations"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Factors such as electrode placement, ambient luminosity, muscle contraction strength and electrode-skin contact can introduce some level of variability in the EOG waveforms amongst users. For example, depending on electrode placement relative to the source generator (eye), signal amplitudes for left and right winks were observed to vary in magnitude. The complexities in the signals arising from these contributions is expected to have a detrimental effect on the generalisation of the trained model to new-users. However in future implementations, model performance can be improved through larger training sets acquired from hundreds (or thousands) of users in order to capture the full range of potential operating environments, electrode placements and other user-to-user variability."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 5.2 Future Work"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 5.2.1 Haptic Communicator  "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The prototype provides the set-up code required for integrating haptic-hardware with the virtual-keyboard, to facilitate the development mentioned in 4.2.3. This would require collaboration between Physics, Data Science as well as Engineering disciplines. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 5.2.2 EOG Hardware"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Avenues for EOG hardware improvement are:\n",
+    "  \n",
+    "  1) Additional electrodes in the vertical orientation allow for more degrees of freedom in user input.\n",
+    "  \n",
+    "  2) Integration of professional grade EOG hardware. The SpikerBox, is “appropriate for use in middle/high school educational programs and by amateurs” (Marzullo & Gage, 2012).\n",
+    "  \n",
+    "These changes would impact the performance by providing better signals to the classifier, thus creating room for improved input-classification.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "G5Abg6FlrnbR"
+   },
+   "source": [
+    "### 5.3 Conclusion"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The team set-out to develop a virtual-keyboard which could be used by patients suffering from Motor Neuron Diseases, and created a high-fidelity prototype. \n",
+    "\n",
+    "To achieve this, interdisciplinary effectiveness was crucial. The data collected by Physics students was the foundation upon which Data-Science students built classification models, which made the virtual keyboard usable.  \n",
+    "Based on the Human-Centered evaluation strategy, the ANN was used in our final prototype, due to its remarkable performance in all three sub-segments of the evaluation strategy. \n",
+    "\n",
+    "In the future, after the integration/development of the haptic-communicator, better classifiers, professional EOG-hardware and portability-modules, the product will be ready for use not only by MND patients, but anyone who requires hands-free typing. \n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "TGVcADPHrnd5"
+   },
+   "source": [
+    "## 6. Student Contribution"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "X0X4cmXHrngc"
+   },
+   "source": [
+    "### 6.1 Matty"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "Bafpxraprni8"
+   },
+   "source": [
+    "### 6.2 Ashwin"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "As a Data Science and Computer Science disciple, my contributions were:\n",
+    "   \n",
+    "   a) Development of classification models;\n",
+    "   \n",
+    "   b) Qualitative, quantitative and graphical evaluation of models;\n",
+    "   \n",
+    "   c) Development and integration of Haptic Module;\n",
+    "   \n",
+    "   d) Evaluation of keyboard layout;\n",
+    "   \n",
+    "   e) Conducting a literature review on key-board layouts;\n",
+    "   \n",
+    "   f) Writing the report sections 3 , 3.3.2 , 3.3.3, 3.4, 3.4.1, 3.4.2,3.4.3, 4.1.1, 4.1.5 , 5.2.1, 5.2.2 and 5.3; \n",
+    "   \n",
+    "   g) Presentation slides for product introduction \n",
+    "   \n",
+    "I also helped during the data collection process.\n",
+    "I would like to acknowledge the constant support and feedback the teammates provided me with. \n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "8zjRi9i3r9nn"
+   },
+   "source": [
+    "### 6.3 Marcus"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Focussed on initial data analysis using R, report writing (part of methods, aims, plus editing report overall) , presentation production (spoke on user experience and conclusion in presentation), discussing and brainstorming as well as script writing. Also used to collect training data for the product. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "ZaTrmwj7r9qK"
+   },
+   "source": [
+    "### 6.4. Alex"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Using my physics background, I contributed to initial product development and brainstorming the implementation of keyboard designs as well as participating in multiple data collection sessions. Within them, I worked with Josh to ensure the data collected for the classifier was as high quality as possible, incorporating random movements of the eye and experimenting with different electrode placements, spiker boxes, and members of the group. Finally, I edited and presented the slides on data collection, as well as collaborated on the report focusing mainly on the physics background and discussion components."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "6HS1Q0Pxr9sZ"
+   },
+   "source": [
+    "### 6.5. Jingyu"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "As a data student with coding experience, I contributed in:\n",
+    "- Idea generation and prototype creation of the binary tree keyboard layout;\n",
+    "- Implementation of Pygame-based user interface;\n",
+    "- Improvement of UI features and functionalities in the evaluation phase;\n",
+    "- Integrating classification model and UI\n",
+    "- Participation in presentation and report writing.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "6ukHvavmr9ui"
+   },
+   "source": [
+    "### 6.9. Josh\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "As a physics student my primary role in the project involved working directly with the SpikerBox to determine optimal electrode placement and writing code to stream raw data in both MATLAB and python. Furthermore, I tested a range of digital filters and experimented with fine-tuning filter parameters. I participated in data collection by instructing actions based on pre-determined sequences as well as performing the actions myself. In the presentation, I contributed to slide design and provided a live demonstration of the virtual keyboard. Additionally, I contributed to writing and editing the background and discussion sections in the final report as well as the ANN, confusion matrix and data flow diagrams. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## References"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "1) What is ALS/MND?. (2022). Retrieved 8 May 2022, from https://www.als-mnd.org/what-is-alsmnd/#:~:text=Although%20classified%20as%20a%20rare,384%20new%20cases%20every%20day!\n",
+    "\n",
+    "2) Bulling, Andreas; Ward, Jamie A.; Gellersen, Hans; Tröster, Gerhard (2009). [ACM Press the 11th international conference - Orlando, Florida, USA (2009.09.30-2009.10.03)] Proceedings of the 11th international conference on Ubiquitous computing - Ubicomp '09 - Eye movement analysis for activity recognition. , (), 41–. doi:10.1145/1620545.1620552 \n",
+    "\n",
+    "3) Tufte, E. (1986). The visual display of quantitative information. Retrieved 27 May 2022, from https://dl.acm.org/doi/10.5555/33404\n",
+    "\n",
+    "4) Tufte, E. (1990). Envisioning information. Retrieved 27 May 2022, from https://dl.acm.org/doi/10.5555/78223\n",
+    "\n",
+    "5) Tufte, E. (1997). Visual explanations:images and quantities, evidence and narrative. Retrieved 27 May 2022, from https://dl.acm.org/doi/10.5555/248468\n",
+    "\n",
+    "6) Tufte, E. (2006). Beautiful Evidence. Retrieved 27 May 2022, from https://dl.acm.org/doi/book/10.5555/1198006\n",
+    "\n",
+    "7) Japkowicz, N., & Shah, M. (2011). Evaluating Learning Algorithms:A Classification Perspective. Retrieved 27 May 2022, from https://dl.acm.org/doi/10.5555/1964882\n",
+    "\n",
+    "8) Chen, T., & Guestrin, C. (2016). XGBoost: A Scalable Tree Boosting System. Retrieved 28 May 2022, from https://dl.acm.org/doi/pdf/10.1145/2939672.2939785 \n",
+    "\n",
+    "9) Marzullo, T., & Gage, G. (2012). The SpikerBox: A Low Cost, Open-Source BioAmplifier for Increasing Public Participation in Neuroscience Inquiry. Retrieved 29 May 2022, from https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3310049/ \n",
+    "\n",
+    "10) Guenther, N. and Schonlau, M., 2016. Support Vector Machines. [online] SAGE journals. Available at: <https://journals.sagepub.com/doi/10.1177/1536867X1601600407> [Accessed 28 May 2022].\n",
+    "\n",
+    "11) 9) Breiman, L., & Cutler, A. (2006). Random forests - copyright. Retrieved 28 May 2022, from https://www.stat.berkeley.edu/~breiman/RandomForests/cc_copyright.htm\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "7bZM8plir9xL"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "8q57R1Hkr9zj"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "pjMRmECbr92D"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "3BoyYYZyr94d"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "Paog5ZoCr97E"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "5pd0gRmUr99z"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "CkXy1VyMr-BO"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "A02CJpxarnld"
+   },
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "OjUMV1vkrnoP"
+   },
+   "source": []
+  }
+ ],
+ "metadata": {
+  "colab": {
+   "collapsed_sections": [],
+   "name": "Final Report.ipynb",
+   "provenance": []
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
