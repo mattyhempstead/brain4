@@ -8,9 +8,9 @@ from AutocompleteTree import AutocompleteTree
 from SwitchCircle import SwitchCircle
 from InputBox import InputBox
 
-from brainbox.brainbox import brainbox_loop
+# from brainbox.brainbox import brainbox_loop
 
-import HapticRelayer
+# import HapticRelayer
 
 class App:
     BACKGROUND_COLOR = LIGHT_GREY
@@ -66,7 +66,7 @@ class App:
 
         while self.running:
             
-            brainbox_loop()
+            # brainbox_loop()
 
             # event handler
             for event in pygame.event.get():
